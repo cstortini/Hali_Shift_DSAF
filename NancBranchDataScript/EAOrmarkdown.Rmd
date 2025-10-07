@@ -50,7 +50,9 @@ theme_update(
 This analysis explores the relationship between abundance and the area containing different percentages of abundance across regions and years. We'll examine how the spatial distribution of abundance varies over time and across different regions.We finish by regressing Area on abundance, which tells us to what extent an expansion is due to an increase in abundance. 
 
 ```{r load-data,include=FALSE}
-abdest<- read.csv("~/My_Program_Files/R/Hali_Shift_withNF/2025-04-23/Output/IndexAbundance/AbundanceEstimates_GridCentriods_Reg.csv")
+#abdest<- read.csv("~/My_Program_Files/R/Hali_Shift_withNF/2025-04-23/Output/IndexAbundance/AbundanceEstimates_GridCentriods_Reg.csv")
+abdest<- read.csv(here::here("2025-04-23/Output/IndexAbundance/AbundanceEstimates_GridCentriods_Reg.csv"))
+
 dim(abdest) 
 #summary(abdest) #View(abdest) #unique(abdest$Area_km2)
 abdest$Region<-factor(abdest$Stratum)
@@ -93,6 +95,7 @@ calculate_areas <- function(data, thresholds = c(50, 75, 90, 95)) {
     threshold_result <- data %>%
       group_by(Region, Year) %>%
       mutate(Total_Abundance = sum(Abundance)) %>%
+       mutate(Total_Area = sum(Area_km2)) %>% #correcting total_area calculation 
       arrange(Region, Year, desc(Abundance/Area_km2)) %>%
       mutate(
         Cumulative_Abundance = cumsum(Abundance),
@@ -103,8 +106,10 @@ calculate_areas <- function(data, thresholds = c(50, 75, 90, 95)) {
       summarize(
         Threshold = threshold,
         Area_Threshold = sum(Area_km2),
-        Total_Area = sum(Area_km2, na.rm = TRUE),
-        Percent_Area_Used = Area_Threshold / sum(Area_km2, na.rm = TRUE) * 100,
+        #Percent_Area_Used = Area_Threshold / sum(Area_km2, na.rm = TRUE) * 100,
+        Percent_Area_Used = Area_Threshold / Total_Area * 100,#correcting total_area calculation 
+        #Total_Area = sum(Area_km2, na.rm = TRUE),
+        Total_Area = first(Total_Area),##correcting total_area calculation
         Total_Abundance = first(Total_Abundance),
         n_cells = n()
       )
