@@ -48,10 +48,10 @@ Depth_raster<- focal(Depth_raster, w = matrix(1,3,3), fun = fill.na,
                      pad = TRUE, na.rm = FALSE )
 plot(Depth_raster)
 
-#1.2 Join depth data to Estimates data
-SDM_data_All<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All_wDepth.csv"))
-SDM_data_Reg<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg_wDepth.csv"))
-SDM_data_CA<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA_wDepth.csv"))
+#1.2 Join depth data to Estimates data (from 3.1Date_prep.R)
+SDM_data_All<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All_May20.csv"))
+SDM_data_Reg<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg_May20.csv"))
+SDM_data_CA<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA_May20.csv"))
 
 # They need to be spatial 
 st_crs(Depth_raster)
