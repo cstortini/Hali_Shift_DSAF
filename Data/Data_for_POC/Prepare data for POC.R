@@ -6,7 +6,7 @@ library(patchwork)
 #1: ABUNDANCE----
   #Data from 3.1 Data_prep.R, step 1: Generated stratified abundance and standard error estimates
   abundance_ind_Region<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.csv"))  
-  head(abundance_ind_Region)
+  str(abundance_ind_Region)
 
   #subset to Spring and remove "all" (Canada and USA only)
 abundance_ind_Region_Sp<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring" & abundance_ind_Region$Index_Region=="Canada" | 
@@ -25,16 +25,16 @@ ggplot(abundance_ind_Region_Sp,
 
 head(abundance_ind_Region_Sp)
 #remove the columns that are not useful
-abundance_ind_Region_Sp$Time <- NULL
-abundance_ind_Region_Sp$Category  <- NULL
-abundance_ind_Region_Sp$YearGroup  <- NULL
-abundance_ind_Region_Sp$Date  <- NULL
-abundance_ind_Region_Sp$Season  <- NULL
+  abundance_ind_Region_Sp$Time <- NULL
+  abundance_ind_Region_Sp$Category  <- NULL
+  abundance_ind_Region_Sp$YearGroup  <- NULL
+  abundance_ind_Region_Sp$Date  <- NULL
+  abundance_ind_Region_Sp$Season  <- NULL
 #rename some columns for clarity
-names(abundance_ind_Region_Sp)[c(2,3,4)] <- c("Region", "Estimate", "SD")
+  names(abundance_ind_Region_Sp)[c(2,3,4)] <- c("Region", "Estimate", "SD")
 #reset X column 
-abundance_ind_Region_Sp$X <- 1:102
-summary(abundance_ind_Region_Sp)
+  abundance_ind_Region_Sp$X <- 1:102
+  str(abundance_ind_Region_Sp)
 #save
 write.csv(abundance_ind_Region_Sp,(here::here("Data/Data_for_POC/POC_Abundance.csv")), row.names = FALSE)
 
@@ -44,14 +44,13 @@ write.csv(abundance_ind_Region_Sp,(here::here("Data/Data_for_POC/POC_Abundance.c
       #then 8.1 Deepening.R adds a depth field
       abdest<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg_wDepth.csv"))
       dim(abdest) 
-      summary(abdest) 
+      str(abdest) 
       abdest$Region<-factor(abdest$Stratum)
 
 #Select for Spring
 abdest.spr<- abdest %>%
   filter(Season == "Spring")
-dim(abdest.spr)
-names(abdest.spr)
+str(abdest.spr)
 
 # Calculate total annual spring abundance by region and year
 abdest.spr <- abdest.spr %>%
@@ -138,7 +137,7 @@ write.csv(area_thresholds,(here::here("Data/Data_for_POC/POC_AreaOccupied.csv"))
     # Data are grouped by year/season/region
       #calculates the mean, median, Q5, and Q95 depth, weighted by estimated abundance values 
       D_data_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_Reg.csv"))
-      summary(D_data_Reg) 
+      str(D_data_Reg) 
 
 #subset spring
   D_data_Reg<- subset(D_data_Reg, D_data_Reg$Season == "Spring")
@@ -167,9 +166,9 @@ write.csv(D_data_Reg,(here::here("Data/Data_for_POC/POC_AWD.csv")), row.names = 
 #4 RANGE EDGE----
   #from 7.1RangeEdge.R: Calculates 5th/50th/95th percentile of the spatial distribution (Weighted by abundance est,  quantile of the coordinate values)
   RE_DAT<- read.csv(here::here("R/DataforFinalFigs/Edge_df_NSreshp.csv"))
-
+  str(RE_DAT)
+  
 #these data area already subset to spring and represent the whole study area, but we can remove some useless fields
-names(RE_DAT)
 RE_DAT$YearGroup   <- NULL
 RE_DAT$Season   <- NULL
 write.csv(RE_DAT,(here::here("Data/Data_for_POC/POC_RangeEdge.csv")), row.names = FALSE)
@@ -179,22 +178,46 @@ write.csv(RE_DAT,(here::here("Data/Data_for_POC/POC_RangeEdge.csv")), row.names 
     #which takes the abundance estimates per grid location data (AbundanceEstimates_GridCentriods_Reg_wDepth.csv), from 3.1 Data_prep.R
       #and calculates the weighted mean of lon/lat based on the abundance values,
       centroid_data_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/seasonal_centroid_data_region.csv"))
+      str(centroid_data_Reg)
+      
+#subset for spring,rename some columns for clarity, and remove unneeded
+  centroid_data_Reg<-subset(centroid_data_Reg, centroid_data_Reg$Season=="Spring")
+  names(centroid_data_Reg)[names(centroid_data_Reg) == "Stratum"] <- "Region" 
+  centroid_data_Reg$Season  <- NULL 
+  str(centroid_data_Reg)
+  write.csv(centroid_data_Reg,(here::here("Data/Data_for_POC/POC_COG.csv")), row.names = FALSE)
+
+
+#6 DISTANCE TO SHARED BORDER----
+  #data from 6.1Distance_From_Hague.R
+    #identifies the closest point on the border to each COG in the time series for each season/Region grouping,
+      #before calculating the distance (km) between each "closest" point and the corresponding COG 
+      dist_hague_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/dist_hague_Reg_seasonal.csv"))
+      str(dist_hague_Reg)
 
 #subset for spring,rename some columns for clarity, and remove unneeded
-centroid_data_Reg<-subset(centroid_data_Reg, centroid_data_Reg$Season=="Spring")
-names(centroid_data_Reg)[names(centroid_data_Reg) == "Stratum"] <- "Region" 
-centroid_data_Reg$Season  <- NULL 
-write.csv(centroid_data_Reg,(here::here("Data/Data_for_POC/POC_COG.csv")), row.names = FALSE)
-names(centroid_data_Reg)
+      dist_hague_Reg<-subset(dist_hague_Reg, dist_hague_Reg$Season=="Spring")
+      names(dist_hague_Reg)[names(dist_hague_Reg) == "Stratum"] <- "Region" 
+      dist_hague_Reg$Season  <- NULL       
+      str(dist_hague_Reg)
+#multiply USA by -1 so they are on the left side of the border
+      dist_hague_Reg2 <- dist_hague_Reg %>%
+        mutate(
+          Dist_Mean = if_else(Region == "USA", Dist_Mean * -1, Dist_Mean),
+          Dist_Med = if_else(Region == "USA", Dist_Med * -1, Dist_Med),
+          Dist_Q5 = if_else(Region == "USA", Dist_Q5 * -1, Dist_Q5),
+          Dist_Q95 = if_else(Region == "USA", Dist_Q95 * -1, Dist_Q95)
+        )
+#plot      
+ggplot(dist_hague_Reg2, 
+  aes(x = Year, y = Dist_Mean, colour = Region, group = Region)) +
+ geom_line() +
+        theme_bw() +
+        labs(x = "Year", y = "Distance to Border (km)",
+             colour = "Region", fill = "Region")  +
+  geom_hline(yintercept = 0, color = "black", linetype = "dashed", linewidth = 0.8)
 
-#6 DISTANCE TO BORDER----
-
-
-
-
-
-
-
+write.csv(dist_hague_Reg2,(here::here("Data/Data_for_POC/POC_DtoB.csv")), row.names = FALSE)
 
 
 

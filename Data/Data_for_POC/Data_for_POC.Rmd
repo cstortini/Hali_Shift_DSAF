@@ -34,11 +34,11 @@ Total annual estimated spring-time abundance per region. Derived from indexed es
 
 * Region: USA, Canada
 
-* Estimate: Total annual estimated spring-time abundance 
+* Year: 1990-2023
+
+* Estimate: Total annual estimated spring-time abundance (count)
 
 * SD: Standard Deviation 
-
-* Year: 1990-2023
 
 * X: Unique identifier
 
@@ -59,7 +59,7 @@ ggplot(POC_Abundance,
                   fill = Region), 
               alpha = 0.25, colour = NA) +
   theme_bw() +
-  labs(x = "Year", y = "Estimate",
+  labs(x = "Year", y = "Abundance Estimate",
        colour = "Region", fill = "Region")
 
 ```
@@ -101,7 +101,7 @@ AO1<-ggplot(POC_AO_sub,
        aes(x = Year, y = Area_Threshold, colour = Region, group = Region)) +
   geom_line() +
   theme_bw() +
-  labs(x = "Year", y = "Total Area occupied (90% Abundance)",
+  labs(x = "Year", y = "Total km² occupied (90% Abundance)",
        colour = "Region", fill = "Region")+
   theme(legend.position = "none")
 
@@ -133,7 +133,7 @@ The mean, median, Q5, and Q95 depth, weighted by estimated abundance values
 
 * Year: 1990-2023 
 
-* Depth distribution values: Mean, Median, Q5, Q95 
+* Depth distribution values (m): Mean, Median, Q5, Q95 
 
 ```{r AWD data, echo=FALSE}
 POC_AWD<-read.csv(here::here("Data/Data_for_POC/POC_AWD.csv"))
@@ -153,7 +153,7 @@ ggplot(POC_AWD,
                   fill = Region), 
               alpha = 0.25, colour = NA) +
   theme_bw() +
-  labs(x = "Year", y = "Depth",
+  labs(x = "Year", y = "Depth (m)",
        colour = "Region", fill = "Region")
 ```
 
@@ -162,7 +162,10 @@ ggplot(POC_AWD,
 **Data: POC_RangeEdge.csv**
 
 Annual location of leading and trailing edges for the entire stock 
-The 5th percentile (trailing edge), 50th, and  95th percentile (leading edge) of the species' spatial distribution were calculated using a weighted quantile of the coordinate values (weighted by abundance estimates).   
+The 5th percentile (trailing edge), 50th, and  95th percentile (leading edge) of the species' spatial distribution were calculated using a weighted quantile of the coordinate values (weighted by abundance estimates).  
+
+
+Units are in km East/West, so here,  we also convert them to a geographic coordinate system so that they can be plotted on a map (convert_km_to_wgs84) 
 
 * Year: 1990-2023
 
@@ -504,32 +507,31 @@ COG_Reg_map
 
 **Data: POC_DtoB.csv**
 
-Summary 
+The distance between the closest point on the border to each COG metric in the time series and grouping,
 
 * Region: USA, Canada
 
 * Year: 1990-2023
 
-* X: Unique identifier
+* Dist_Mean: Distance (km), between the closest point on the shared border and the COG(weighted mean) for each year/region
+
+* Dist_Mean, Dist_Q5, Dist_Q95: Distance to COG (weighted median, weighted 5th percentile, and 95th percentile, respectively)
 
 ```{r DtoB data, echo=FALSE}
 POC_DtoB<-read.csv(here::here("Data/Data_for_POC/POC_DtoB.csv"))
-str(POC_Abundance)
+str(POC_DtoB)
 
 ```
 
 ### Trends in Distance to Shared Border 
 
-```{r abundance plot, echo=FALSE, fig.width=6, fig.height=4}
+```{r DtoB plot, echo=FALSE, fig.width=6, fig.height=4}
 ggplot(POC_DtoB, 
-       aes(x = Year, y = Estimate, colour = Region, group = Region)) +
+       aes(x = Year, y = Dist_Mean, colour = Region, group = Region)) +
   geom_line() +
-  geom_ribbon(aes(ymin = Estimate - SD,
-                  ymax = Estimate + SD,
-                  fill = Region), 
-              alpha = 0.25, colour = NA) +
+  geom_hline(yintercept = 0, color = "black", linetype = "dashed", linewidth = 0.8)+
   theme_bw() +
-  labs(x = "Year", y = "Estimate",
+  labs(x = "Year", y = "Distance (km)",
        colour = "Region", fill = "Region")
 
 ```
