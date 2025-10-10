@@ -1,8 +1,14 @@
+
 #Data handover/prep for Jake Lawlor
 library(dplyr)
 library(ggplot2)
 library(patchwork)
 #Bring in all the data and pair it down until it contains only what is needed for handover----
+
+#SECTION 1: timeseries data
+#SECTION 2: scaled slopes
+
+#SECTION 1: timeseries data
 #1: ABUNDANCE----
   #Data from 3.1 Data_prep.R, step 1: Generated stratified abundance and standard error estimates
   abundance_ind_Region<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.csv"))  
@@ -218,11 +224,219 @@ ggplot(dist_hague_Reg2,
   geom_hline(yintercept = 0, color = "black", linetype = "dashed", linewidth = 0.8)
 
 write.csv(dist_hague_Reg2,(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_DtoB.csv")), row.names = FALSE)
+#End section1----
 
 
+#SECTION 2: scaled slopes----
+#read in the timeseries data
+POC_Abundance<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_Abundance.csv"))
+POC_AO<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_AreaOccupied.csv"))
+POC_AWD<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_AWD.csv"))
+POC_RE<- read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_RangeEdge.csv"))
+POC_COG<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_COG.csv"))
+POC_DtoB<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_DtoB.csv"))
+# We are only calculating the slope on the period since 2006 when the water began warming 
+#add the time period info 
+add_period <- function(df) {
+  df$Period <- NULL
+  df$Period[df$Year<2006]<-"Before Warming"
+  df$Period[df$Year>2005]<-"During Warming"
+  return(df)
+}
+POC_Abundance<-add_period(POC_Abundance)
+POC_AO<-add_period(POC_AO)
+POC_AWD<-add_period(POC_AWD)
+POC_RE<-add_period(POC_RE)
+POC_COG<-add_period(POC_COG)
+POC_DtoB<-add_period(POC_DtoB)
 
+#calculate scaled slopes by Region and Period
+library(dplyr)
+library(broom)
+library(rlang)
 
+#ABUNDANCE
+#estimates scaled change in estimated abundance per year
+str(POC_Abundance)
+Abundance_coefficients_df <- POC_Abundance %>%
+  group_by(Region,Period) %>%
+  do({
+    model <- lm(scale(Estimate) ~ scale(Year), data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+Abundance_coefficients_df<-Abundance_coefficients_df%>%
+  filter(term == "scale(Year)", Period == "During Warming") %>%
+  mutate(Indicator = "Abundance")
+Abundance_coefficients_df
 
+#ARE OCCUPIED
+#estimates scaled change in the total area  required to reach abundance Threshold==90 per year
+str(POC_AO)
+POC_AO_sub<-subset(POC_AO, POC_AO$Threshold ==90)
+AO_coefficients_df <- POC_AO_sub %>%
+  group_by(Region,Period) %>%
+  do({
+    model <- lm(scale(Area_Threshold) ~ scale(Year), data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+AO_coefficients_df<-AO_coefficients_df%>%
+  filter(term == "scale(Year)", Period == "During Warming") %>%
+  mutate(Indicator = "Area Occupied")
+AO_coefficients_df
 
+#ABUNDANCE-WEIGHTED DEPTH
+#estimated scaled change in average depth per year
+str(POC_AWD)
+AWD_coefficients_df <- POC_AWD %>%
+  group_by(Region,Period) %>%
+  do({
+    model <- lm(scale(Depth_Mean) ~ scale(Year), data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+AWD_coefficients_df<-AWD_coefficients_df%>%
+  filter(term == "scale(Year)", Period == "During Warming") %>%
+  mutate(Indicator = "Abundance Weighted Depth")
+AWD_coefficients_df
 
+#RANGE EDGE
+str(POC_RE)
+  #Trailing Edge(located in USA)
+    #Trailing edge East
+      RE_Trail_East_coefficients_df <- POC_RE %>%
+        group_by(Period) %>%
+        do({
+          model <- lm(scale(Estimate_km_E_quantile_0.05) ~ scale(Year), data = .)
+          data.frame(t(coef(model)))
+          tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+        }) %>%
+        ungroup()
+      RE_Trail_East_coefficients_df<-RE_Trail_East_coefficients_df%>%
+        filter(term == "scale(Year)", Period == "During Warming") %>%
+        mutate(Indicator = "Trailing_Edge_East",
+                Region = "USA")%>%
+        select(Region, everything())
+      RE_Trail_East_coefficients_df
+      
+      #Trailing edge North
+      RE_Trail_North_coefficients_df <- POC_RE %>%
+        group_by(Period) %>%
+        do({
+          model <- lm(scale(Estimate_km_N_quantile_0.05) ~ scale(Year), data = .)
+          data.frame(t(coef(model)))
+          tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+        }) %>%
+        ungroup()
+      RE_Trail_North_coefficients_df<-RE_Trail_North_coefficients_df%>%
+        filter(term == "scale(Year)", Period == "During Warming") %>%
+        mutate(Indicator = "Trailing_Edge_North",
+               Region = "USA")%>%
+        select(Region, everything())
+      RE_Trail_North_coefficients_df
+      
+  #Leading Leading(located in Canada)
+    #Leading edge East
+      RE_Lead_East_coefficients_df <- POC_RE %>%
+        group_by(Period) %>%
+        do({
+          model <- lm(scale(Estimate_km_E_quantile_0.95) ~ scale(Year), data = .)
+          data.frame(t(coef(model)))
+          tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+        }) %>%
+        ungroup()
+      RE_Lead_East_coefficients_df<-RE_Lead_East_coefficients_df%>%
+        filter(term == "scale(Year)", Period == "During Warming") %>%
+        mutate(Indicator = "Leading_Edge_East",
+                Region = "Canada")%>%
+        select(Region, everything())
+      RE_Lead_East_coefficients_df
+      
+      #Leading edge North 
+      RE_Lead_North_coefficients_df <- POC_RE %>%
+        group_by(Period) %>%
+        do({
+          model <- lm(scale(Estimate_km_N_quantile_0.95) ~ scale(Year), data = .)
+          data.frame(t(coef(model)))
+          tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+        }) %>%
+        ungroup()
+      RE_Lead_North_coefficients_df<-RE_Lead_North_coefficients_df%>%
+        filter(term == "scale(Year)", Period == "During Warming") %>%
+        mutate(Indicator = "Leading_Edge_North",
+               Region = "Canada")%>%
+        select(Region, everything())
+      RE_Lead_North_coefficients_df
+    
+#CENTRE OF GRAVITY
+str(POC_COG)
+  #east
+  COG_E_coefficients_df <- POC_COG %>%
+    group_by(Region,Period) %>%
+    do({
+      model <- lm(scale(centroid_longitude) ~ scale(Year), data = .)
+      data.frame(t(coef(model)))
+      tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+    }) %>%
+    ungroup()
+  COG_E_coefficients_df<-COG_E_coefficients_df%>%
+    filter(term == "scale(Year)", Period == "During Warming") %>%
+    mutate(Indicator = "COG_East")
+  COG_E_coefficients_df
+  #north
+  COG_N_coefficients_df <- POC_COG %>%
+    group_by(Region,Period) %>%
+    do({
+      model <- lm(scale(centroid_latitude) ~ scale(Year), data = .)
+      data.frame(t(coef(model)))
+      tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+    }) %>%
+    ungroup()
+  COG_N_coefficients_df<-COG_N_coefficients_df%>%
+    filter(term == "scale(Year)", Period == "During Warming") %>%
+    mutate(Indicator = "COG_North")
+  COG_N_coefficients_df
 
+#DISTANCE TO SHARED BORDER 
+str(POC_DtoB)
+DtoB_coefficients_df <- POC_DtoB %>%
+  group_by(Region,Period) %>%
+  do({
+    model <- lm(scale(Dist_Mean) ~ scale(Year), data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+DtoB_coefficients_df<-DtoB_coefficients_df%>%
+  filter(term == "scale(Year)", Period == "During Warming") %>%
+  mutate(Indicator = "Distance to Border")
+DtoB_coefficients_df
+
+#the dfs all have the same structure so merge them into one
+merged_coefficients_df <- bind_rows(Abundance_coefficients_df, 
+                       AO_coefficients_df, 
+                       RE_Lead_East_coefficients_df, RE_Lead_North_coefficients_df, 
+                       RE_Trail_East_coefficients_df, RE_Trail_North_coefficients_df,
+                       COG_E_coefficients_df, COG_N_coefficients_df,
+                       DtoB_coefficients_df, 
+                       AWD_coefficients_df)
+
+merged_coefficients_df$Period<-"2006-2023"
+merged_coefficients_df<-merged_coefficients_df%>%
+  select(Indicator, everything())
+
+merged_coefficients_df <- merged_coefficients_df %>%
+  mutate(
+    p.significant = case_when(
+      p.value < 0.001 ~ "Very strong",
+      p.value < 0.01  ~ "Strong",
+      p.value < 0.05  ~ "Moderate",
+      TRUE ~ "Not significant"
+    )
+  )
+
+write.csv(merged_coefficients_df,(here::here("Data/Data_SHinyApp_Proof_of_Concept/Scaled_Slopes_all_indicators.csv")), row.names = FALSE)
