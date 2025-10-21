@@ -1,10 +1,13 @@
 # I landed on: R 4.4.1, INLA 24.12.11, and TMB 1.9.15
+#https://cran.r-project.org/bin/windows/base/old/4.4.1/
+#also download rtools version
+#https://cran.r-project.org/bin/windows/Rtools/rtools44/rtools.html
 
 #update R
 .libPaths()
 install.packages("installr")
 library(installr)
-updateR()
+#updateR()
 
 #see https://github.com/James-Thorson-NOAA/VAST for installing VAST and TMB
 #Installing INLA was complicated and required a lot of trial and error..THe INLA website as well as 
@@ -26,15 +29,15 @@ install_if_missing <- function(pkg) {
 sapply(required_packages, install_if_missing)
 #after all these dependencies are installed, restart r and run ...to be honest i do not remember which of the following worked...but one should 
 #this will get you the latest version 
-install.packages("INLA", repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/stable"), type = "source")
-install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
-install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/testing"), dep=TRUE)
+#install.packages("INLA", repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/stable"), type = "source")
+#install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
+#install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/testing"), dep=TRUE)
 
 
 #my version of INLA was built under 4.4.2
 #Try updating R
 #Try older version of INLA 23.09.09 manually download here: https://inla.r-inla-download.org/R/stable/bin/windows/contrib/4.3/
-install.packages("C:/Users/fergusonk/AppData/Local/Programs/R/R-4.2.2/INLA_23.09.09.zip", repos=NULL)#install from downloaded file
+#install.packages("C:/Users/fergusonk/AppData/Local/Programs/R/R-4.2.2/INLA_23.09.09.zip", repos=NULL)#install from downloaded file
 
 
 # Install the remotes package if you haven't already
