@@ -1,3 +1,21 @@
+#Update October 2025 on new computer 
+install.packages("installr")
+library(installr)
+R.version # 4.5.1
+#make sure you have an sppropriate version of Rtools
+#https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html
+#get TMB and devtools loaded 
+install.packages(c("TMB", "devtools"))
+library(TMB)
+library(devtools)
+#install VAST from source and this will get INLA aswell as a dependency
+devtools::install_github("James-Thorson-NOAA/VAST", dependencies = TRUE)
+
+
+
+
+
+#### OLD- these are the versions that worked for me when i was working on paper 1.  They are now out of date----
 # I landed on: R 4.4.1, INLA 24.12.11, and TMB 1.9.15
 #https://cran.r-project.org/bin/windows/base/old/4.4.1/
 #also download rtools version
@@ -46,11 +64,10 @@ library(remotes)
 # Then install a specific version of TMB, available versions here: https://cran.r-project.org/src/contrib/Archive/TMB/
 remotes::install_version("TMB", version = "1.9.16", repos = "http://cran.us.r-project.org")
 
-
-# Install remotes package if not already installed
-if (!requireNamespace("remotes", quietly = TRUE)) {
-  install.packages("remotes")
-}
-
 # Install INLA version 24.06.27
 remotes::install_version("INLA", version = "24.06.27", repos = "https://inla.r-inla-download.org/R/stable")
+remotes::install_version("INLA", version = "24.12.11", repos = "https://inla.r-inla-download.org/R/stable")
+
+
+
+
