@@ -13,6 +13,23 @@ library(here)
 library(terra)
 ```
 
+## Notes/Updates: we don't want to distract with the Canada vs. USA thing so there have been some manipulations 
+
+* Region names have all been changed from Canada and USA to Region 1 and Region 2 respectively 
+* **Centre of Gravity:**  
+  * for Region1 have been moved west into 4XW and Region 2 from USA into Newfoundland.  
+  * Although we originally included the median and ,5th & 95th quantile in the data, because they were not used in the construction of the POC, here, I did not calculate new values for them, and instead removed them. 
+* **Distance to border:**  
+  * For POC, the Hague Line has been replaced with a theoretical administrative  border (which, based on NAFO divisions, runs between the Scotian shelf and Newfoundland ). 
+  * **Path to shape file: Data/Data_SHinyApp_Proof_of_Concept/NewData_NoCountries/TheorheticalBorder_Shapefile/AdministrativeBorder.shp** 
+  * Distance to border values were not recalculated based on the new administrative border and COG values (because the trends are similar enough for the purpose of the POC) 
+  * **HOWEVER**, because the COG for Region 1 is now west of the border, and Region 2 is now East of it:
+    * The signs from the original data have been reversed 
+    * The timeline on Region1 has been reversed so that it approaches the border (the direction for Region 2 is appropriately drifting away, so it has been left alone).  
+  * **Path to new data files: Data/Data_SHinyApp_Proof_of_Concept/NewData_NoCountries/...manipulated.csv** 
+  * Exception: Range Edge did not have a regional component so it is unaffected, so it was just copied to this file. 
+
+## Overview of Data for Proof of Concept 
 Assembled in **Prepare data for POC.R**, the **Data_SHinyApp_Proof_of_Concept folder** contains data for the temporal (and spatial where applicable*) timeseries for the 6 shift indicators, calculated based on Atlantic halibut abundance estimates form SDM output. All data have been subset to spring estimates.
 
 1. Abundance*: total annual estimated abundance  
@@ -29,12 +46,6 @@ Assembled in **Prepare data for POC.R**, the **Data_SHinyApp_Proof_of_Concept fo
 
 7. Scaled Slopes:  lm slopes for 2006-2023 (the period when the water began warming rapidly), scaled  so that all indicators are in the same units
 
-### Notes/Updates: we don't want to distract with the Canada vs. USA thing so there have been some manipulations 
-
-* Region names have all been changed from Canada and USA to Region 1 and Region 2 Respectively 
-* Centriods for Region1 have been moved west into 4XW and Region 2 from the states in to Newfoundland 
-* Range Edge was the only indicator without a regional componenet so it is unaffected, the rest have new "manipulated" versions (_manipulated.csv)
-* I said I was going to reverse the distance to border values for Region 2, but didn't because they still reflect the right directional trend (thought the values are not accurate, should do as a placeholder)
 
 ## 1. Abundance 
 
@@ -53,7 +64,7 @@ Total annual estimated spring-time abundance per region. Derived from indexed es
 * X: Unique identifier
 
 ```{r abundance data, echo=FALSE}
-POC_Abundance<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_Abundance_manipulated.csv"))
+POC_Abundance<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/NewData_NoCountries/POC_Abundance_manipulated.csv"))
 str(POC_Abundance)
 
 ```
@@ -112,7 +123,7 @@ The total area containing 50%, 75%, 90%, and 95% of the abundance. This calculat
 * Area_Efficiency: = space used per unit of abundance...is abundance more concentrated or dispersed
 
 ```{r AO data, echo=FALSE}
-POC_AO<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_AreaOccupied_manipulated.csv"))
+POC_AO<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/NewData_NoCountries/POC_AreaOccupied_manipulated.csv"))
 str(POC_AO)
 POC_AO_sub<-subset(POC_AO, POC_AO$Threshold ==90)
 ```
@@ -159,7 +170,7 @@ The mean, median, Q5, and Q95 depth, weighted by estimated abundance values
 * Depth distribution values (m): Mean, Median, Q5, Q95 
 
 ```{r AWD data, echo=FALSE}
-POC_AWD<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_AWD_manipulated.csv"))
+POC_AWD<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/NewData_NoCountries/POC_AWD_manipulated.csv"))
 str(POC_AWD)
 
 ```
@@ -199,7 +210,7 @@ Units are in km East/West, so here,  we also convert them to a geographic coordi
 * Leading Edge Variables (95th, Canada): Estimate_km_E_quantile_0.95, Estimate_km_N_quantile_0.95,  Std_Dev_km_E_quantile_0.95, Std_Dev_km_N_quantile_0.95
 
 ```{r RE data, echo=FALSE}
-RE_DAT<- read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_RangeEdge.csv"))
+RE_DAT<- read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/NewData_NoCountries/POC_RangeEdge.csv"))
 str(RE_DAT)
 ```
 
@@ -284,12 +295,12 @@ st_crs(study_area_polygon) <- crs
   EEZ <- st_read(here::here("", "Data/Mapping_shapefiles/EEZ.shp"))
   contours <- st_read(here::here("", "Data/Mapping_shapefiles/GEBCO_DepthContours.shp"))
   NAFO <-st_read(here::here("", "Data/Mapping_shapefiles/Divisions.shp"))
-  Hague <-  st_read(here::here("", "Data/Mapping_shapefiles/HagueLine.shp"))
+  AdminiBoder <-  st_read(here::here("", "Data/Data_SHinyApp_Proof_of_Concept/NewData_NoCountries/TheorheticalBorder_Shapefile/AdministrativeBorder.shp"))
     All_region<- st_transform (All_region, crs)
     EEZ <- st_transform (EEZ, crs)
     contours <- st_transform (contours, crs)
     NAFO <- st_transform (NAFO, crs)
-    Hague <- st_transform (Hague, crs)
+    AdminiBoder <- st_transform (AdminiBoder, crs)
       sf::sf_use_s2(FALSE)   # revert to GEOS-based operations
       EEZ <- st_intersection(EEZ, study_area_polygon)
       contours <- st_intersection(contours, study_area_polygon)
@@ -301,7 +312,7 @@ RangeEdge_Mapped <-  ggplot() +
   geom_sf(data = contours, color="lightblue", linewidth = .4) +
   geom_sf(data = All_region,  fill = NA) +
   geom_sf(data = NAFO, color="dimgrey", fill = NA) +
-  geom_sf(data = Hague, color="black", linewidth = 1) +
+  geom_sf(data = AdminiBoder, color="black", linewidth = 1) +
   geom_sf(data = EEZ, color="black", linetype = "dashed", linewidth  = 1) +
   geom_sf(data = Land , color = "black", fill = "cornsilk") +
   #coord_sf(xlim = c(-72, -47), ylim = c(41, 50), expand = FALSE) 
@@ -428,7 +439,7 @@ The average latitude and longitude, weighted by abundance
 * **Removed** centroid_latitude_Quantile_95 & centroid_longitude_Quantile_95: weighted 95th percentile
 
 ```{r COG data, echo=FALSE}
-POC_COG<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_COG_manipulated.csv"))
+POC_COG<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/NewData_NoCountries/POC_COG_manipulated.csv"))
 str(POC_COG)
 
 ```
@@ -469,13 +480,13 @@ COG_Reg_map<-ggplot() +
   geom_sf(data = contours, color="lightblue", linewidth = .4) +
   geom_sf(data = All_region,  fill = NA) +
   geom_sf(data = NAFO, color="dimgrey", fill = NA) +
-  geom_sf(data = Hague, color="black", linewidth = 1) +
+  geom_sf(data = AdminiBoder, color="black", linewidth = 1) +
   geom_sf(data = EEZ, color="black", linetype = "dashed", linewidth  = 1) +
   geom_sf(data = Land , color = "black", fill = "cornsilk") +
   #geom_sf(data = contours, color="lightblue",lwd=.5) +
   #geom_sf(data = NAFO, color="black",lty=1,lwd=.8,fill = NA) +
   #geom_sf(data = EEZ, color="black",lty=1,lwd=.8) +
-  #geom_sf(data = Hague,  fill = NA,lty=1,lwd=.8) +
+  #geom_sf(data = AdminiBoder,  fill = NA,lty=1,lwd=.8) +
   #geom_sf(data = land, fill = "cornsilk") +  
   geom_sf(data = POC_COG_sf, aes(color = Year),size =3, alpha = .5,shape=16) +  
   xlim(-80, -44) + ylim(35, 55)+
@@ -541,7 +552,7 @@ The distance between the closest point on the border to each COG metric in the t
 * Dist_Mean, Dist_Q5, Dist_Q95: Distance to COG (weighted median, weighted 5th percentile, and 95th percentile, respectively)
 
 ```{r DtoB data, echo=FALSE}
-POC_DtoB<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/POC_DtoB_manipulated.csv"))
+POC_DtoB<-read.csv(here::here("Data/Data_SHinyApp_Proof_of_Concept/NewData_NoCountries/POC_DtoB_manipulated.csv"))
 str(POC_DtoB)
 
 ```
