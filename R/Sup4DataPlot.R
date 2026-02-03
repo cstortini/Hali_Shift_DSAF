@@ -43,7 +43,7 @@ dfo_tows <- read_rds(here("Data/TrawlSurvey_data/dfo_weight_at_length.rds")) |>
     year = as.numeric(as.character(format(date, "%Y")))
   ) |>
   mutate(swept = 0.0405)
-
+ 
 nefsc_tows <- read_rds(here("Data/TrawlSurvey_data/nefsc_both_weight_at_length.rds")) |>
   ungroup() |>
   dplyr::select(longitude, latitude, trawl_id, season, year, survey, date) |>
@@ -142,6 +142,10 @@ all(nf_tows$trawl_id %in% nf_catch$trawl_id)
 catch_df <- rbind(dfo_catch, nefsc_catch, nf_catch) |>
   mutate(season = str_to_sentence(season), survey_season = paste(survey, season, sep = "_"))
 summary(catch_df)
+
+
+
+
 #----
 
 #Part2: Supplemental Figure 1: Footprint of NEFSC and DFO Maritimes, and NF  RV surveys ----
@@ -150,7 +154,8 @@ library (ggplot2)
 
 tows_df<-subset(tows_df, tows_df$year > 1989)
 tows_df<-subset(tows_df, tows_df$year < 2024)
-
+catch_df<-subset(catch_df, catch_df$year > 1989)
+catch_df<-subset(catch_df, catch_df$year < 2024)
 #see the extent
 extent <- tows_df |>
   distinct(longitude, latitude) |>
@@ -187,6 +192,8 @@ land <- st_intersection(land, bbox_polygon)#maybe comment out
 contours <- st_intersection(contours, bbox_polygon)
 NAFO <- st_intersection(NAFO, bbox_polygon)
 
+catch_df$survey <- factor(catch_df$survey, levels = c("NEFSC", "DFO", "NF") )
+
 tows_df$survey <- factor(tows_df$survey, levels = c("NEFSC", "DFO", "NF") )
 library(ggplot2)
 library(gridExtra)
@@ -200,8 +207,8 @@ library(grid)  # For unit() function
 
 All_Trawls_Plot<-ggplot() +
   geom_sf(data = NAFO, color="darkblue", fill = NA) +
-  geom_sf(data = Hague, color="black", size = 3) +
-  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 3) +
+  geom_sf(data = Hague, color="black", size = 1) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 1) +
   geom_sf(data = land, fill="cornsilk") +
   geom_point (data = tows_df, aes(x= longitude , y = latitude, col= survey),  alpha = .6, size = .2, shape=19)+
   scale_color_manual(values = c("NEFSC" = "steelblue", "DFO" =  "orangered", "NF" = "darkred"))+ 
