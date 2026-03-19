@@ -8,38 +8,25 @@
   #Plot presence only 
 library(sf)
 library (ggplot2)
-
-All_region <- st_read(here::here("", "R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))
-crs <- st_crs(All_region)
-
-#bounding box for plotting
-study_area_bbox <- st_bbox(c(xmin = -76, ymin = 35.5, xmax = -45, ymax = 60))
-study_area_polygon <- st_as_sfc(study_area_bbox)
-st_crs(study_area_polygon) <- crs
+library(rnaturalearth)
 
 #Mapping shapefiles
 EEZ <- st_read(here::here("", "Data/Mapping_shapefiles/EEZ.shp"))
-land <- st_read(here::here("", "Data/Mapping_shapefiles/poly_NAD83.shp"))
+land <- st_read(here::here("", "Data/Mapping_shapefiles/poly_NAD83.shp")) #eastern Can only
+land_canada <- ne_countries(country = "Canada", scale = "medium", returnclass = "sf")
 contours <- st_read(here::here("", "Data/Mapping_shapefiles/GEBCO_DepthContours.shp"))
 NAFO <- st_read(here::here("", "Data/Mapping_shapefiles/Divisions.shp"))
 Hague <- st_read(here::here("", "Data/Mapping_shapefiles/HagueLine.shp"))
 
+crs<-st_crs(land_canada)
+
 EEZ <- st_transform (EEZ, crs)
 land <- st_transform (land, crs)
 contours <- st_transform (contours, crs)
-NAFO <- st_transform (NAFO, crs)
 Hague <- st_transform (Hague, crs)
 
 # Clip large shapefiles shapefile to  bounding box
 sf::sf_use_s2(FALSE)   # revert to GEOS-based operations
-
-EEZ <- st_intersection(EEZ, study_area_polygon)
-land <- st_intersection(land, study_area_polygon)#maybe comment out 
-contours <- st_intersection(contours, study_area_polygon)
-NAFO <- st_intersection(NAFO, study_area_polygon)
-
-# Convert to data frames
-All_region_df <- st_as_sf(data.frame(geometry = All_region))
 
 library(sf)
 library(ggrepel)
@@ -47,7 +34,7 @@ library(ggrepel)
 # Plot CoreArea
 CAMAP<-ggplot() +
   #geom_sf(data = contours, color="lightblue") +
-  geom_sf(data = All_region_df,  fill = NA) +
+  #geom_sf(data = All_region_df,  fill = NA) +
   geom_sf(data = Hague, color="navy") +
   geom_sf(data = EEZ, color="navy", linetype = "dashed", size = 1.2) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
@@ -76,28 +63,31 @@ head(halcrib)
 str(halcrib)
 #write.csv(halcrib, "Data/CRIB/crib_halibut.csv")
 halcrib<-read.csv("Data/CRIB/crib_halibut.csv")
+halcrib2<-read.csv("Data/CRIB/crib_greenland_halibut.csv")
 halcrib$ToE.year<-2015+(-log(halcrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
+halcrib2$ToE.year<-2015+(-log(halcrib2$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
 
 # Convert dataframe to an `sf` object
 library(sf)
 library(terra)
 library(gstat)
 halv<-halcrib[,c("longitude","latitude","ssp","Vulnerability")]
+halv2<-halcrib2[,c("longitude","latitude","ssp","Vulnerability")]
 haltsm<-halcrib[,c("longitude","latitude","ssp","S.Thermal.safety.margin")]
 haltoe<-halcrib[,c("longitude","latitude","ssp","ToE.year")]
 halcv<-halcrib[,c("longitude","latitude","ssp","E.Climate.velocity")]
 halthv<-halcrib[,c("longitude","latitude","ssp","AC.Thermal.habitat.availability")]
 # Convert to a spatial object
-spatial_points1 <- vect(haltoe[haltoe$ssp=="SSP1-2.6",], geom = c("longitude", "latitude"), crs = "WGS84")
+spatial_points1 <- vect(halv[halv$ssp=="SSP5-8.5",], geom = c("longitude", "latitude"), crs = "WGS84")
 # Create an empty raster (set resolution and extent as needed)
 r <- rast(extent=spatial_points1, resolution = 0.25, crs = "WGS84") # Adjust resolution
 # Rasterize the points into a grid
-raster_data1 <- rasterize(spatial_points1, r, field = "ToE.year", fun = mean)
-spatial_points2 <- vect(haltoe[haltoe$ssp=="SSP5-8.5",], geom = c("longitude", "latitude"), crs = "WGS84")
+raster_data1 <- rasterize(spatial_points1, r, field = "Vulnerability", fun = mean)
+spatial_points2 <- vect(halv2[halv2$ssp=="SSP5-8.5",], geom = c("longitude", "latitude"), crs = "WGS84")
 # Create an empty raster (set resolution and extent as needed)
 r <- rast(extent=spatial_points2, resolution = 0.25, crs = "WGS84") # Adjust resolution
 # Rasterize the points into a grid
-raster_data2 <- rasterize(spatial_points2, r, field = "ToE.year", fun = mean)
+raster_data2 <- rasterize(spatial_points2, r, field = "Vulnerability", fun = mean)
 
 #plot(raster_data)
 
@@ -105,25 +95,134 @@ raster_data2 <- rasterize(spatial_points2, r, field = "ToE.year", fun = mean)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(viridis) 
-raster_df<-as.data.frame(raster_data2, xy=TRUE)
-colnames(raster_df) <- c("longitude", "latitude", "ToE.year") 
+library(cowplot)
+raster_df<-as.data.frame(raster_data1, xy=TRUE)
+colnames(raster_df) <- c("longitude", "latitude", "Vulnerability") 
 VMAP <- ggplot() +
-  geom_raster(data = raster_df, aes(x = longitude, y = latitude, fill = `ToE.year`)) +
-  geom_sf(data = All_region_df, fill = NA) +
+  geom_raster(data = raster_df, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
+  #geom_sf(data = All_region_df, fill = NA) +
   geom_sf(data = Hague, color = "navy") +
-  geom_sf(data = EEZ, color = "navy", linetype = "dashed", size = 1.2) +
-  geom_sf(data = NAFO, color = "darkgrey", size=0.9, fill = NA) +
   geom_sf(data = land, fill = "cornsilk") +
-  scale_fill_viridis_c(
-    option = "D", # Keep the "D" viridis colour palette
-    name = "Time of Climate Emergence",
-    direction = -1 # Reverse the direction of the colour scale
+  geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
+  geom_sf(data = NAFO, color = "darkgrey", size = 0.9, fill = NA) +
+  geom_sf_label(
+    data          = NAFO,
+    aes(label     = ZONE),
+    size          = 4,
+    colour        = "black",
+    fontface      = "bold",
+    fill          = alpha("grey90", 0.7),   # semi-transparent grey box
+    label.size    = 0.2,                    # border thickness around box
+    label.padding = unit(0.1, "lines"),     # padding inside box
+    check_overlap = TRUE
   ) +
-  xlim(-72.5, -45) + ylim(39, 60) +
+  scale_fill_viridis_c(
+    option    = "D",
+    name      = "Vulnerability",
+    direction = 1
+  ) +
+  xlim(-80, -46) + ylim(39.6, 68) +
   theme_bw() +
   theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
-  labs(title = "Time of Climate Emergence SSP1-2.6", x = "Longitude", y = "Latitude", color = "Time of Climate Emergence")
+  labs(title = "a) NAFO Divisions", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
 print(VMAP) 
+
+regions <- st_read(here::here("", "Data/Mapping_shapefiles/FederalMarineBioregions_SHP/FederalMarineBioregions.shp"))
+regions1 <- regions[regions$LABEL != "999", ]
+raster_df2<-as.data.frame(raster_data2, xy=TRUE)
+colnames(raster_df2) <- c("longitude", "latitude", "Vulnerability") 
+VMAP2 <- ggplot() +
+  geom_raster(data = raster_df2, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
+  #geom_sf(data = All_region_df, fill = NA) +
+  geom_sf(data = Hague, color = "navy") +
+  geom_sf(data = land_canada, fill = "cornsilk") +
+  geom_sf(data = regions1, color = "darkgrey", size = 0.9, fill = NA) +
+  geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
+  geom_sf_label(
+    data          = regions1,
+    aes(label     = LABEL),
+    size          = 4,
+    colour        = "black",
+    fontface      = "bold",
+    fill          = alpha("grey90", 0.7),   # semi-transparent grey box
+    label.size    = 0.2,                    # border thickness around box
+    label.padding = unit(0.1, "lines"),     # padding inside box
+    check_overlap = TRUE
+  ) +
+  scale_fill_viridis_c(
+    option    = "D",
+    name      = "Vulnerability",
+    direction = 1
+  ) +
+  xlim(-138, -50) + ylim(42, 82) +
+  theme_bw() +
+  theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
+  labs(title = "b) Marine Bioregions", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
+print(VMAP2)
+
+# Clean versions — just remove legends, no extra layers
+VMAP_clean <- VMAP +
+  theme(
+    legend.position  = "none",
+    axis.title.y       = element_text(size = 14),
+    plot.title       = element_text(size = 15)
+  )
+
+VMAP2_clean <- VMAP2 +
+  theme(
+    legend.position = "none",
+    axis.title.y    = element_blank(),
+    plot.title       = element_text(size = 15),
+    plot.margin     = margin(5, 0, 5, -15)  # negative left margin pulls it closer to VMAP
+  )
+
+# Extract shared legend
+shared_legend <- get_legend(
+  VMAP +
+    theme(
+      legend.position = "right",
+      legend.title    = element_text(size = 11),
+      legend.text     = element_text(size = 9),
+      legend.margin   = margin(0, 0, 0, -15)   # negative left margin pulls legend left
+    ) +
+    guides(fill = guide_colourbar(
+      title          = "Vulnerability",
+      barwidth       = unit(0.5, "cm"),
+      barheight      = unit(6, "cm"),
+      title.position = "top",
+      title.hjust    = 0.5
+    ))
+)
+
+# Combine maps side-by-side
+maps_row <- plot_grid(
+  VMAP_clean,
+  VMAP2_clean,
+  ncol       = 2,
+  align      = "h",
+  rel_widths = c(1, 1.4)
+)
+
+# Add shared legend to the right
+final_map <- plot_grid(
+  maps_row,
+  shared_legend,
+  ncol       = 2,
+  rel_widths = c(1, 0.13)
+)
+
+print(final_map)
+# ── Save ──────────────────────────────────────────────────────────────────────
+ggsave(
+  filename = "CRIB results/NAFO_and_Bioregions.png",
+  plot     = final_map,
+  width    = 10,
+  height   = 5,
+  dpi      = 400,
+  bg       = "white"
+)
+
+message("Done! Plot saved")
 
 ### Calculate average + SD for each indicator in zones 4X, 4VW, and 3KL:###
 library(sf)      # For spatial data handling

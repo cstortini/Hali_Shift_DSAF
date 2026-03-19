@@ -48,61 +48,92 @@ base_theme <- theme_bw(base_size = 14) +
   )
 
 #--- Get Halibut data ---
-halcrib<-read.csv("Data/CRIB/crib_halibut.csv")
+halcrib<-read.csv("Data/CRIB/crib_greenland_halibut.csv")
 halcrib$ToE.year<-2015+(-log(halcrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
 
+# Get biorgeions
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+regions <- st_read(here::here("", "Data/Mapping_shapefiles/FederalMarineBioregions_SHP/FederalMarineBioregions.shp"))
+crs <- st_crs(regions)
+land <- ne_countries(country = "Canada", scale = "medium", returnclass = "sf")
+sf::sf_use_s2(FALSE)   # revert to GEOS-based operations
+# Filter regions where LABEL is in 5:10 (Arctic only)
+regions_cropped <- regions[regions$LABEL %in% c(6,8:10), ]
+# Verify the result
+print(regions_cropped)
+
+# Convert dataframe to an `sf` object
+library(terra)
+library(gstat)
+halv<-halcrib[,c("longitude","latitude","ssp","Vulnerability")]
+haltsm<-halcrib[,c("longitude","latitude","ssp","S.Thermal.safety.margin")]
+haltoe<-halcrib[,c("longitude","latitude","ssp","ToE.year")]
+halthv<-halcrib[,c("longitude","latitude","ssp","AC.Thermal.habitat.availability")]
+# Convert to a spatial object
+spatial_points1 <- vect(halv[halv$ssp=="SSP1-2.6",], geom = c("longitude", "latitude"), crs = "WGS84")
+# Create an empty raster (set resolution and extent as needed)
+r <- rast(extent=spatial_points1, resolution = 0.25, crs = "WGS84") # Adjust resolution
+# Rasterize the points into a grid
+raster_data1 <- rasterize(spatial_points1, r, field = "Vulnerability", fun = mean)
+spatial_points2 <- vect(halv[halv$ssp=="SSP5-8.5",], geom = c("longitude", "latitude"), crs = "WGS84")
+# Create an empty raster (set resolution and extent as needed)
+r <- rast(extent=spatial_points2, resolution = 0.25, crs = "WGS84") # Adjust resolution
+# Rasterize the points into a grid
+raster_data2 <- rasterize(spatial_points2, r, field = "Vulnerability", fun = mean)
+
+# Make map of vulnerability by bioregion
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(viridis) 
+raster_df<-as.data.frame(raster_data2, xy=TRUE)
+colnames(raster_df) <- c("longitude", "latitude", "Vulnerability") 
+VMAP <- ggplot() +
+  geom_raster(data = raster_df, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
+  geom_sf(data = regions_cropped,  color = "black", fill=NA, , size = 1) +
+  geom_sf_label(data = regions_cropped, aes(label = LABEL), size = 3, family = "serif") +
+  geom_sf(data = land, fill = "cornsilk") +
+  scale_fill_viridis_c(
+    option = "D", # Keep the "D" viridis colour palette
+    name = "Vulnerability",
+    direction = -1 # Reverse the direction of the colour scale
+  ) +
+  #xlim(-72.5, -45) + ylim(39, 60) +
+  theme_bw() +
+  theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
+  labs(title = "Greenland halibut SSP5-8.5", x = "Longitude", y = "Latitude", color = "Vulnerability")
+print(VMAP) 
+
+### Merge crib data with bioregion shapefile
 library(sf)      # For spatial data handling
 library(dplyr)   # For summarizing grouped data
 library(here)
-
-NAFO <- st_read(here::here("", "Data/Mapping_shapefiles/Divisions.shp"))
 # Convert halcrib data frame to a spatial object
 halcrib1 <- st_as_sf(halcrib, coords = c("longitude", "latitude"), crs = "WGS84")
 # Reproject both datasets to align their CRS (e.g., EPSG:4326)
-halcrib1 <- st_transform(halcrib1, crs = st_crs(NAFO))
+halcrib1 <- st_transform(halcrib1, crs = st_crs(regions_cropped))
 # Perform a spatial join to add the NAFO zone info to each point in halcrib
-halcrib_with_zones <- st_join(halcrib1, NAFO, na.rm=TRUE)
+halcrib_BR <- st_join(halcrib1, regions_cropped, na.rm=TRUE)
+head(halcrib_BR)
+names(halcrib_BR)
+unique(halcrib_BR$LABEL)
+halcrib_BR_clean <- halcrib_BR[] %>%
+  filter(!is.na(LABEL), !is.na(LABEL)) #remove NAs
+unique(halcrib_BR_clean$LABEL)
 
-# Check the first few rows of the resulting dataset
-head(halcrib_with_zones)
-names(halcrib_with_zones)
-unique(halcrib_with_zones$ZONE)
-# Remove rows where NAFO_ID or ZONE are NA
-halcrib_with_zones_clean <- halcrib_with_zones[] %>%
-  filter(!is.na(NAFO_ID), !is.na(ZONE))
-unique(halcrib_with_zones_clean$ZONE)
-head(halcrib_with_zones_clean)
+south_to_north <- c(10,9,8,6)
+halcrib_BR_clean$BR <- factor(halcrib_BR_clean$LABEL, levels = south_to_north)
 
-# Add new NAFO groups
-halcrib_with_zones_clean1 <- halcrib_with_zones_clean %>%
-  mutate(
-    NAFO_Zones = case_when(
-      ZONE %in% c("4Vn", "4Vs", "4W") ~ "4VW",    # If ZONE is one of these values, assign "4VW"
-      ZONE %in% c("4X") ~ "4X",
-      ZONE %in% c("3N","3O","3Pn","3Ps") ~ "3NOPs",
-      ZONE %in% c("3K","3L") ~ "3KL",
-      ZONE %in% c("2J","2H","2G") ~ "2JHG",
-      ZONE %in% c("5Y","5Ze", "5Zw", "6A") ~ "5YZ6A",
-      ZONE %in% c("4R","4S","4T") ~ "4RST",
-      ZONE %in% c("1D","1E","1F", "1A","1B","1C") ~ "1",
-      ZONE %in% c("0A","0B") ~"0"
-    )
-  )%>%
-  filter(!is.na(NAFO_Zones))  # Remove rows where NAFO_Zones is NA
-head(halcrib_with_zones_clean1)
-
-south_to_north <- c("5YZ6A","4X","4VW","3NOPs","4RST","3KL","2JHG","0")
-halcrib_with_zones_clean1$ND <- factor(halcrib_with_zones_clean1$NAFO_Zones, levels = south_to_north)
-
-data_ordered <- halcrib_with_zones_clean1 %>%
-  mutate(ND = factor(ND, levels = south_to_north)) %>%
-  arrange(ND)
+data_ordered <- halcrib_BR_clean %>%
+  mutate(BR = factor(BR, levels = south_to_north)) %>%
+  arrange(BR)
 
 ### CRIB PLOTS ###
 # ── Plot 1 – Thermal Safety Margin (direction = 1: purple → yellow) ──────────
 grad_tsm <- make_gradient_df(xmin = 0, xmax = 1, direction = 1)
 p1 <- ggplot(data_ordered,
-             aes(x = S.Thermal.safety.margin, y = ND)) +
+             aes(x = S.Thermal.safety.margin, y = BR)) +
   gradient_rects(grad_tsm) +
   viridis_fill_scale +
   geom_boxplot(
@@ -127,7 +158,7 @@ p1 <- ggplot(data_ordered,
 grad_thv <- make_gradient_df(xmin = 0, xmax = 1, direction = -1)
 
 p2 <- ggplot(data_ordered,
-             aes(x = AC.Thermal.habitat.availability, y = ND)) +
+             aes(x = AC.Thermal.habitat.availability, y = BR)) +
   gradient_rects(grad_thv) +
   viridis_fill_scale +
   geom_boxplot(
@@ -159,7 +190,7 @@ toe_max <- ceiling(max(data_ordered$ToE.year, na.rm = TRUE) / 10) * 10
 grad_toe <- make_gradient_df(xmin = toe_min, xmax = toe_max, direction = -1)
 
 p3 <- ggplot(data_ordered,
-             aes(x = ToE.year, y = ND)) +
+             aes(x = ToE.year, y = BR)) +
   # Layer 1: continuous viridis gradient rectangles + its own scale
   gradient_rects(grad_toe) +
   scale_fill_gradientn(
@@ -208,7 +239,7 @@ p3 <- ggplot(data_ordered,
 grad_vuln <- make_gradient_df(xmin = 0, xmax = 1, direction = 1)
 
 p4 <- ggplot(data_ordered,
-             aes(x = Vulnerability, y = ND)) +
+             aes(x = Vulnerability, y = BR)) +
   # Layer 1: continuous viridis gradient rectangles + its own scale
   gradient_rects(grad_vuln) +
   scale_fill_gradientn(
@@ -247,8 +278,8 @@ p4 <- ggplot(data_ordered,
     legend.text          = element_text(size = 11),
     legend.title         = element_text(size = 12)
   )
-
-
+  
+  
 # ── Shared viridis gradient legend (bottom) ───────────────────────────────────
 # Blend viridis colours with white at alpha = 0.45 to match panel backgrounds
 # Uses base R only: col2rgb → interpolate toward white → rgb()
@@ -296,7 +327,7 @@ plot_body <- plot_grid(
 # Add shared y-axis label centred across p1 and p4
 final_plot <- ggdraw(plot_body) +
   draw_label(
-    "NAFO Divisions (South to North)",
+    "Bioregion (South to North)",
     x        = 0.01,          # distance from left edge — adjust if label is clipped
     y        = 0.55,          # centred across p1 + p4 rows, above the legend
     angle    = 90,
@@ -306,10 +337,10 @@ final_plot <- ggdraw(plot_body) +
 
 # ── Save ──────────────────────────────────────────────────────────────────────
 ggsave(
-  filename = "CRIB results/AtlHalibut_CRIB_Full_and_3Indices_ByNAFO.png",
+  filename = "CRIB results/GrnldHalibut_CRIB_Full_and_3Indices_ByBioregion_Arctic.png",
   plot     = final_plot,
   width    = 18,
-  height   = 10,
+  height   = 7,
   dpi      = 400,
   bg       = "white"
 )
