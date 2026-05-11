@@ -48,7 +48,7 @@ base_theme <- theme_bw(base_size = 14) +
   )
 
 #--- Get Halibut data ---
-halcrib<-read.csv("Data/CRIB/crib_halibut.csv")
+halcrib<-read.csv("Data/CRIB/crib_greenland_halibut.csv")
 halcrib$ToE.year<-2015+(-log(halcrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
 
 library(sf)      # For spatial data handling

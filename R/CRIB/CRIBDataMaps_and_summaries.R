@@ -58,9 +58,9 @@ head(crib.df)
 ##################################### HALIBUT ###################################################
 #################################################################################################
 #select only halibut data
-halcrib <- crib.df[crib.df$`common name` == "Atlantic Halibut",]
-head(halcrib)
-str(halcrib)
+#halcrib <- crib.df[crib.df$`common name` == "Atlantic Halibut",]
+#head(halcrib)
+#str(halcrib)
 #write.csv(halcrib, "Data/CRIB/crib_halibut.csv")
 halcrib<-read.csv("Data/CRIB/crib_halibut.csv")
 halcrib2<-read.csv("Data/CRIB/crib_greenland_halibut.csv")
@@ -98,17 +98,24 @@ library(viridis)
 library(cowplot)
 raster_df<-as.data.frame(raster_data1, xy=TRUE)
 colnames(raster_df) <- c("longitude", "latitude", "Vulnerability") 
+
+# ── Compute shared vulnerability range across both rasters ────────────────────
+shared_limits <- c(
+  min(raster_df$Vulnerability,  raster_df2$Vulnerability, na.rm = TRUE),
+  max(raster_df$Vulnerability,  raster_df2$Vulnerability, na.rm = TRUE)
+)
+
 VMAP <- ggplot() +
   geom_raster(data = raster_df, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
   #geom_sf(data = All_region_df, fill = NA) +
-  geom_sf(data = Hague, color = "navy") +
+  geom_sf(data = NAFO, color = "darkgrey", size = 0.6, fill = NA) +
   geom_sf(data = land, fill = "cornsilk") +
   geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
-  geom_sf(data = NAFO, color = "darkgrey", size = 0.9, fill = NA) +
+  geom_sf(data = Hague, color = "red", size = 0.8) +
   geom_sf_label(
     data          = NAFO,
     aes(label     = ZONE),
-    size          = 4,
+    size          = 2.5,
     colour        = "black",
     fontface      = "bold",
     fill          = alpha("grey90", 0.7),   # semi-transparent grey box
@@ -119,29 +126,28 @@ VMAP <- ggplot() +
   scale_fill_viridis_c(
     option    = "D",
     name      = "Vulnerability",
-    direction = 1
+    direction = 1,
+    limits    = shared_limits   # add this
   ) +
   xlim(-80, -46) + ylim(39.6, 68) +
   theme_bw() +
   theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
-  labs(title = "a) NAFO Divisions", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
+  labs(title = "a) Atlantic halibut", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
 print(VMAP) 
 
-regions <- st_read(here::here("", "Data/Mapping_shapefiles/FederalMarineBioregions_SHP/FederalMarineBioregions.shp"))
-regions1 <- regions[regions$LABEL != "999", ]
 raster_df2<-as.data.frame(raster_data2, xy=TRUE)
-colnames(raster_df2) <- c("longitude", "latitude", "Vulnerability") 
+colnames(raster_df2) <- c("longitude", "latitude", "Vulnerability")
 VMAP2 <- ggplot() +
   geom_raster(data = raster_df2, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
-  #geom_sf(data = All_region_df, fill = NA) +
-  geom_sf(data = Hague, color = "navy") +
-  geom_sf(data = land_canada, fill = "cornsilk") +
-  geom_sf(data = regions1, color = "darkgrey", size = 0.9, fill = NA) +
+  #geom_sf(data = All_region_df, fill = NA) ++
+  geom_sf(data = NAFO, color = "darkgrey", size = 0.6, fill = NA) +
+  geom_sf(data = land, fill = "cornsilk") +
   geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
+  geom_sf(data = Hague, color = "red", size = 0.8)+
   geom_sf_label(
-    data          = regions1,
-    aes(label     = LABEL),
-    size          = 4,
+    data          = NAFO,
+    aes(label     = ZONE),
+    size          = 2.5,
     colour        = "black",
     fontface      = "bold",
     fill          = alpha("grey90", 0.7),   # semi-transparent grey box
@@ -152,77 +158,91 @@ VMAP2 <- ggplot() +
   scale_fill_viridis_c(
     option    = "D",
     name      = "Vulnerability",
-    direction = 1
+    direction = 1,
+    limits    = shared_limits   # add this
   ) +
-  xlim(-138, -50) + ylim(42, 82) +
+  xlim(-80, -46) + ylim(39.6, 68) +
   theme_bw() +
   theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
-  labs(title = "b) Marine Bioregions", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
+  labs(title = "b) Greenland halibut", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
 print(VMAP2)
+#regions <- st_read(here::here("", "Data/Mapping_shapefiles/FederalMarineBioregions_SHP/FederalMarineBioregions.shp"))
+#regions1 <- regions[regions$LABEL != "999", ]
+#raster_df2<-as.data.frame(raster_data2, xy=TRUE)
+#colnames(raster_df2) <- c("longitude", "latitude", "Vulnerability") 
+#VMAP2 <- ggplot() +
+  #geom_raster(data = raster_df2, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
+  #geom_sf(data = Hague, color = "navy") +
+  #geom_sf(data = land_canada, fill = "cornsilk") +
+  #geom_sf(data = regions1, color = "darkgrey", size = 0.9, fill = NA) +
+  #geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
+  #geom_sf_label(
+    #data          = regions1,
+    #aes(label     = LABEL),
+    #size          = 4,
+    #colour        = "black",
+    #fontface      = "bold",
+    #fill          = alpha("grey90", 0.7),   # semi-transparent grey box
+    #label.size    = 0.2,                    # border thickness around box
+    #label.padding = unit(0.1, "lines"),     # padding inside box
+    #check_overlap = TRUE
+  #) +
+  #scale_fill_viridis_c(
+    #option    = "D",
+    #name      = "Vulnerability",
+    #direction = 1
+  #) +
+  #xlim(-138, -50) + ylim(42, 82) +
+  #theme_bw() +
+  #theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
+  #labs(title = "b) Marine Bioregions", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
+#print(VMAP2)
 
-# Clean versions — just remove legends, no extra layers
+library(cowplot)
+library(grid)
+library(gtable)
+
+# Clean versions
 VMAP_clean <- VMAP +
   theme(
-    legend.position  = "none",
-    axis.title.y       = element_text(size = 14),
-    plot.title       = element_text(size = 15)
+    legend.position = "none",
+    plot.margin     = margin(0, 0, 0, 0)   # no right margin to close the gap
   )
 
 VMAP2_clean <- VMAP2 +
   theme(
-    legend.position = "none",
-    axis.title.y    = element_blank(),
-    plot.title       = element_text(size = 15),
-    plot.margin     = margin(5, 0, 5, -15)  # negative left margin pulls it closer to VMAP
-  )
+    legend.position  = "right",
+    axis.title.y     = element_blank(),
+    axis.text.y      = element_blank(),
+    axis.ticks.y     = element_blank(),
+    plot.margin      = margin(0, 0, 0, 2)  # small left margin adds tiny gap
+  ) +
+  guides(fill = guide_colourbar(
+    title          = "Vulnerability",
+    barwidth       = unit(0.5, "cm"),
+    barheight      = unit(6, "cm"),
+    title.position = "top",
+    title.hjust    = 0.5
+  ))
 
-# Extract shared legend
-shared_legend <- get_legend(
-  VMAP +
-    theme(
-      legend.position = "right",
-      legend.title    = element_text(size = 11),
-      legend.text     = element_text(size = 9),
-      legend.margin   = margin(0, 0, 0, -15)   # negative left margin pulls legend left
-    ) +
-    guides(fill = guide_colourbar(
-      title          = "Vulnerability",
-      barwidth       = unit(0.5, "cm"),
-      barheight      = unit(6, "cm"),
-      title.position = "top",
-      title.hjust    = 0.5
-    ))
-)
+g1 <- ggplotGrob(VMAP_clean)
+g2 <- ggplotGrob(VMAP2_clean)
 
-# Combine maps side-by-side
-maps_row <- plot_grid(
-  VMAP_clean,
-  VMAP2_clean,
-  ncol       = 2,
-  align      = "h",
-  rel_widths = c(1, 1.4)
-)
+# Remove the y-axis column from g2 to eliminate the gap
+# Find and zero out the axis-l (left axis) width in g2
+g2$widths[g2$widths == max(g2$widths)] <- unit(2, "cm")
 
-# Add shared legend to the right
-final_map <- plot_grid(
-  maps_row,
-  shared_legend,
-  ncol       = 2,
-  rel_widths = c(1, 0.13)
-)
+# Bind side by side
+final_grob <- cbind(g1, g2, size = "first")
 
-print(final_map)
-# ── Save ──────────────────────────────────────────────────────────────────────
 ggsave(
-  filename = "CRIB results/NAFO_and_Bioregions.png",
-  plot     = final_map,
+  filename = "CRIB results/NAFO_AH-and-GH.png",
+  plot     = final_grob,
   width    = 10,
   height   = 5,
   dpi      = 400,
   bg       = "white"
 )
-
-message("Done! Plot saved")
 
 ### Calculate average + SD for each indicator in zones 4X, 4VW, and 3KL:###
 library(sf)      # For spatial data handling
