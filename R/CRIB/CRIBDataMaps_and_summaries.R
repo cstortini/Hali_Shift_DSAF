@@ -47,12 +47,28 @@ CAMAP<-ggplot() +
   theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust=1,size=8,family="serif"))
 CAMAP
 
-### Add CRIB data ###
+### Grab CRIB data from GoC Open Data web ###
 require("readr")
 url <- "https://api-proxy.edh-cde.dfo-mpo.gc.ca/catalogue/records/264692e5-7b51-4ab9-bb1f-da65f6fc0875/attachments/EN_ClimateRiskIndex_Spatial-CanEEZ_145Spp.csv"
 crib.df <- read_csv(url)
 head(crib.df)
-#write.csv(crib.df, "Data/CRIB/cribspeciesdata.csv") #file too large
+#write.csv(crib.df, "Data/CRIB/cribspeciesdata.csv") #file too large - do not try to save
+
+#################################################################################################
+################################## Pollock & Herring ############################################
+#################################################################################################
+#select pollock and herring data (replace species names with whatever species you want from the list in unique(crib.df$`common name`))
+unique(crib.df$`common name`)
+polcrib <- crib.df[crib.df$`common name` == "Pollock",]
+hercrib <- crib.df[crib.df$`common name` == "Atlantic Herring",]
+head(polcrib)
+str(polcrib)
+write.csv(polcrib, "Data/CRIB/crib_pollock.csv")
+write.csv(hercrib, "Data/CRIB/crib_herring.csv")
+polcrib<-read.csv("Data/CRIB/crib_pollock.csv")
+hercrib<-read.csv("Data/CRIB/crib_herring.csv")
+polcrib$ToE.year<-2015+(-log(polcrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
+hercrib$ToE.year<-2015+(-log(hercrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
 
 #################################################################################################
 ##################################### HALIBUT ###################################################
