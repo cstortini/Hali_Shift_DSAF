@@ -306,7 +306,7 @@ final_plot <- ggdraw(plot_body) +
 
 # ── Save ──────────────────────────────────────────────────────────────────────
 ggsave(
-  filename = "CRIB results/AtlHalibut_CRIB_Full_and_3Indices_ByNAFO.png",
+  filename = "CRIB results/GreenlandHalibut_CRIB_Full_and_3Indices_ByNAFO.png",
   plot     = final_plot,
   width    = 18,
   height   = 10,
