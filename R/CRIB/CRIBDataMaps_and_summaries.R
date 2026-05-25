@@ -111,21 +111,26 @@ library(cowplot)
 raster_df<-as.data.frame(raster_data1, xy=TRUE)
 colnames(raster_df) <- c("longitude", "latitude", "Vulnerability") 
 
+raster_df2<-as.data.frame(raster_data2, xy=TRUE)
+colnames(raster_df2) <- c("longitude", "latitude", "Vulnerability")
+
 # ── Compute shared vulnerability range across both rasters ────────────────────
 shared_limits <- c(
   min(raster_df$Vulnerability,  raster_df2$Vulnerability, na.rm = TRUE),
   max(raster_df$Vulnerability,  raster_df2$Vulnerability, na.rm = TRUE)
 )
 
+NAFO2<-NAFO[NAFO$ZONE!="6A",]
+
 VMAP <- ggplot() +
   geom_raster(data = raster_df, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
   #geom_sf(data = All_region_df, fill = NA) +
-  geom_sf(data = NAFO, color = "darkgrey", size = 0.6, fill = NA) +
+  geom_sf(data = NAFO2, color = "darkgrey", size = 0.6, fill = NA) +
   geom_sf(data = land, fill = "cornsilk") +
   geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
   geom_sf(data = Hague, color = "red", size = 0.8) +
   geom_sf_label(
-    data          = NAFO,
+    data          = NAFO2,
     aes(label     = ZONE),
     size          = 2.5,
     colour        = "black",
@@ -141,23 +146,21 @@ VMAP <- ggplot() +
     direction = 1,
     limits    = shared_limits   # add this
   ) +
-  xlim(-80, -46) + ylim(39.6, 68) +
+  xlim(-80, -46) + ylim(40, 73) +
   theme_bw() +
   theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
   labs(title = "a) Atlantic halibut", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
 print(VMAP) 
 
-raster_df2<-as.data.frame(raster_data2, xy=TRUE)
-colnames(raster_df2) <- c("longitude", "latitude", "Vulnerability")
 VMAP2 <- ggplot() +
   geom_raster(data = raster_df2, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
   #geom_sf(data = All_region_df, fill = NA) ++
-  geom_sf(data = NAFO, color = "darkgrey", size = 0.6, fill = NA) +
+  geom_sf(data = NAFO2, color = "darkgrey", size = 0.6, fill = NA) +
   geom_sf(data = land, fill = "cornsilk") +
   geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
   geom_sf(data = Hague, color = "red", size = 0.8)+
   geom_sf_label(
-    data          = NAFO,
+    data          = NAFO2,
     aes(label     = ZONE),
     size          = 2.5,
     colour        = "black",
@@ -173,7 +176,7 @@ VMAP2 <- ggplot() +
     direction = 1,
     limits    = shared_limits   # add this
   ) +
-  xlim(-80, -46) + ylim(39.6, 68) +
+  xlim(-80, -46) + ylim(40, 73) +
   theme_bw() +
   theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
   labs(title = "b) Greenland halibut", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
@@ -248,7 +251,7 @@ g2$widths[g2$widths == max(g2$widths)] <- unit(2, "cm")
 final_grob <- cbind(g1, g2, size = "first")
 
 ggsave(
-  filename = "CRIB results/NAFO_AH-and-GH.png",
+  filename = "CRIB results/NAFO_AH-and-GH_to0A_to5Z.png",
   plot     = final_grob,
   width    = 10,
   height   = 5,

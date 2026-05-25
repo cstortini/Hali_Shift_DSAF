@@ -77,21 +77,20 @@ head(halcrib_with_zones_clean)
 halcrib_with_zones_clean1 <- halcrib_with_zones_clean %>%
   mutate(
     NAFO_Zones = case_when(
+      ZONE %in% c("5Y", "5Ze", "5Zw") ~ "5ZY",
       ZONE %in% c("4Vn", "4Vs", "4W") ~ "4VW",    # If ZONE is one of these values, assign "4VW"
       ZONE %in% c("4X") ~ "4X",
       ZONE %in% c("3N","3O","3Pn","3Ps") ~ "3NOPs",
       ZONE %in% c("3K","3L") ~ "3KL",
       ZONE %in% c("2J","2H","2G") ~ "2JHG",
-      ZONE %in% c("5Y","5Ze", "5Zw", "6A") ~ "5YZ6A",
       ZONE %in% c("4R","4S","4T") ~ "4RST",
-      ZONE %in% c("1D","1E","1F", "1A","1B","1C") ~ "1",
-      ZONE %in% c("0B") ~"0B"
+      ZONE %in% c("0B","0A") ~"0AB"
     )
   )%>%
   filter(!is.na(NAFO_Zones))  # Remove rows where NAFO_Zones is NA
 head(halcrib_with_zones_clean1)
 
-south_to_north <- c("5YZ6A","4X","4VW","3NOPs","4RST","3KL","2JHG","0B")
+south_to_north <- c("4X","4VW","3NOPs","4RST","3KL","2JHG","0AB")
 halcrib_with_zones_clean1$ND <- factor(halcrib_with_zones_clean1$NAFO_Zones, levels = south_to_north)
 
 data_ordered <- halcrib_with_zones_clean1 %>%
