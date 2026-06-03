@@ -301,3 +301,309 @@ ggsave(
 )
 
 message("Done! Plot saved")
+
+#################################################################################################
+######################################## MAP Herring ################################################
+#################################################################################################
+#select only halibut data
+halcrib<-read.csv("Data/CRIB/crib_herring.csv")
+halcrib$ToE.year<-2015+(-log(halcrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
+
+# Convert dataframe to an `sf` object
+library(sf)
+library(terra)
+library(gstat)
+halv<-halcrib[,c("longitude","latitude","ssp","Vulnerability")]
+#haltsm<-halcrib[,c("longitude","latitude","ssp","S.Thermal.safety.margin")]
+#haltoe<-halcrib[,c("longitude","latitude","ssp","ToE.year")]
+#halcv<-halcrib[,c("longitude","latitude","ssp","E.Climate.velocity")]
+#halthv<-halcrib[,c("longitude","latitude","ssp","AC.Thermal.habitat.availability")]
+# Convert to a spatial object
+spatial_points1 <- vect(halv[halv$ssp=="SSP5-8.5",], geom = c("longitude", "latitude"), crs = "WGS84")
+# Create an empty raster (set resolution and extent as needed)
+r <- rast(extent=spatial_points1, resolution = 0.25, crs = "WGS84") # Adjust resolution
+# Rasterize the points into a grid
+raster_data1 <- rasterize(spatial_points1, r, field = "Vulnerability", fun = mean)
+spatial_points2 <- vect(halv[halv$ssp=="SSP1-2.6",], geom = c("longitude", "latitude"), crs = "WGS84")
+# Create an empty raster (set resolution and extent as needed)
+r <- rast(extent=spatial_points2, resolution = 0.25, crs = "WGS84") # Adjust resolution
+# Rasterize the points into a grid
+raster_data2 <- rasterize(spatial_points2, r, field = "Vulnerability", fun = mean)
+
+#plot(raster_data)
+
+#add halibut vulnerability rasters to NAFO map
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(viridis) 
+library(cowplot)
+raster_df<-as.data.frame(raster_data1, xy=TRUE)
+colnames(raster_df) <- c("longitude", "latitude", "Vulnerability") 
+
+raster_df2<-as.data.frame(raster_data2, xy=TRUE)
+colnames(raster_df2) <- c("longitude", "latitude", "Vulnerability")
+
+# ── Compute shared vulnerability range across both rasters ────────────────────
+shared_limits <- c(
+  min(raster_df$Vulnerability,  raster_df2$Vulnerability, na.rm = TRUE),
+  max(raster_df$Vulnerability,  raster_df2$Vulnerability, na.rm = TRUE)
+)
+
+NAFO2<-NAFO[NAFO$ZONE!="6A",]
+
+VMAP <- ggplot() +
+  geom_raster(data = raster_df, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
+  #geom_sf(data = All_region_df, fill = NA) +
+  geom_sf(data = NAFO2, color = "darkgrey", size = 0.6, fill = NA) +
+  geom_sf(data = land, fill = "cornsilk") +
+  geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
+  geom_sf(data = Hague, color = "red", size = 0.8) +
+  geom_sf_label(
+    data          = NAFO2,
+    aes(label     = ZONE),
+    size          = 2.5,
+    colour        = "black",
+    fontface      = "bold",
+    fill          = alpha("grey90", 0.7),   # semi-transparent grey box
+    label.size    = 0.2,                    # border thickness around box
+    label.padding = unit(0.1, "lines"),     # padding inside box
+    check_overlap = TRUE
+  ) +
+  scale_fill_viridis_c(
+    option    = "D",
+    name      = "Vulnerability",
+    direction = 1,
+    limits    = shared_limits   # add this
+  ) +
+  xlim(-80, -46) + ylim(40, 70) +
+  theme_bw() +
+  theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
+  labs(title = "a) High emissions (SSP5-8.5)", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
+print(VMAP) 
+
+VMAP2 <- ggplot() +
+  geom_raster(data = raster_df2, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
+  #geom_sf(data = All_region_df, fill = NA) ++
+  geom_sf(data = NAFO2, color = "darkgrey", size = 0.6, fill = NA) +
+  geom_sf(data = land, fill = "cornsilk") +
+  geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
+  geom_sf(data = Hague, color = "red", size = 0.8)+
+  geom_sf_label(
+    data          = NAFO2,
+    aes(label     = ZONE),
+    size          = 2.5,
+    colour        = "black",
+    fontface      = "bold",
+    fill          = alpha("grey90", 0.7),   # semi-transparent grey box
+    label.size    = 0.2,                    # border thickness around box
+    label.padding = unit(0.1, "lines"),     # padding inside box
+    check_overlap = TRUE
+  ) +
+  scale_fill_viridis_c(
+    option    = "D",
+    name      = "Vulnerability",
+    direction = 1,
+    limits    = shared_limits   # add this
+  ) +
+  xlim(-80, -46) + ylim(40, 70) +
+  theme_bw() +
+  theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
+  labs(title = "b) Low emissions (SSP1-2.6)", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
+print(VMAP2)
+
+library(grid)
+library(gtable)
+
+# Clean versions
+VMAP_clean <- VMAP +
+  theme(
+    legend.position = "none",
+    plot.margin     = margin(0, 0, 0, 0)   # no right margin to close the gap
+  )
+
+VMAP2_clean <- VMAP2 +
+  theme(
+    legend.position  = "right",
+    axis.title.y     = element_blank(),
+    axis.text.y      = element_blank(),
+    axis.ticks.y     = element_blank(),
+    plot.margin      = margin(0, 0, 0, 2)  # small left margin adds tiny gap
+  ) +
+  guides(fill = guide_colourbar(
+    title          = "Vulnerability",
+    barwidth       = unit(0.5, "cm"),
+    barheight      = unit(6, "cm"),
+    title.position = "top",
+    title.hjust    = 0.5
+  ))
+
+g1 <- ggplotGrob(VMAP_clean)
+g2 <- ggplotGrob(VMAP2_clean)
+
+# Bind side by side
+final_grob <- cbind(g1, g2, size = "first")
+
+ggsave(
+  filename = "CRIB results/NAFO_Herring_5Zto0A_2scenarios.png",
+  plot     = final_grob,
+  width    = 10,
+  height   = 5,
+  dpi      = 400,
+  bg       = "white"
+)
+
+# Save as RDS
+saveRDS(final_grob, "CRIB results/NAFO_Herring_5Zto0A_2scenarios.rds")
+
+#################################################################################################
+######################################## MAP Pollock ################################################
+#################################################################################################
+#select only halibut data
+halcrib<-read.csv("Data/CRIB/crib_pollock.csv")
+halcrib$ToE.year<-2015+(-log(halcrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
+
+# Convert dataframe to an `sf` object
+library(sf)
+library(terra)
+library(gstat)
+halv<-halcrib[,c("longitude","latitude","ssp","Vulnerability")]
+#haltsm<-halcrib[,c("longitude","latitude","ssp","S.Thermal.safety.margin")]
+#haltoe<-halcrib[,c("longitude","latitude","ssp","ToE.year")]
+#halcv<-halcrib[,c("longitude","latitude","ssp","E.Climate.velocity")]
+#halthv<-halcrib[,c("longitude","latitude","ssp","AC.Thermal.habitat.availability")]
+# Convert to a spatial object
+spatial_points1 <- vect(halv[halv$ssp=="SSP5-8.5",], geom = c("longitude", "latitude"), crs = "WGS84")
+# Create an empty raster (set resolution and extent as needed)
+r <- rast(extent=spatial_points1, resolution = 0.25, crs = "WGS84") # Adjust resolution
+# Rasterize the points into a grid
+raster_data1 <- rasterize(spatial_points1, r, field = "Vulnerability", fun = mean)
+spatial_points2 <- vect(halv[halv$ssp=="SSP1-2.6",], geom = c("longitude", "latitude"), crs = "WGS84")
+# Create an empty raster (set resolution and extent as needed)
+r <- rast(extent=spatial_points2, resolution = 0.25, crs = "WGS84") # Adjust resolution
+# Rasterize the points into a grid
+raster_data2 <- rasterize(spatial_points2, r, field = "Vulnerability", fun = mean)
+
+#plot(raster_data)
+
+#add halibut vulnerability rasters to NAFO map
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(viridis) 
+library(cowplot)
+raster_df<-as.data.frame(raster_data1, xy=TRUE)
+colnames(raster_df) <- c("longitude", "latitude", "Vulnerability") 
+
+raster_df2<-as.data.frame(raster_data2, xy=TRUE)
+colnames(raster_df2) <- c("longitude", "latitude", "Vulnerability")
+
+# ── Compute shared vulnerability range across both rasters ────────────────────
+shared_limits <- c(
+  min(raster_df$Vulnerability,  raster_df2$Vulnerability, na.rm = TRUE),
+  max(raster_df$Vulnerability,  raster_df2$Vulnerability, na.rm = TRUE)
+)
+
+NAFO2<-NAFO[NAFO$ZONE!="6A",]
+
+VMAP <- ggplot() +
+  geom_raster(data = raster_df, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
+  #geom_sf(data = All_region_df, fill = NA) +
+  geom_sf(data = NAFO2, color = "darkgrey", size = 0.6, fill = NA) +
+  geom_sf(data = land, fill = "cornsilk") +
+  geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
+  geom_sf(data = Hague, color = "red", size = 0.8) +
+  geom_sf_label(
+    data          = NAFO2,
+    aes(label     = ZONE),
+    size          = 2.5,
+    colour        = "black",
+    fontface      = "bold",
+    fill          = alpha("grey90", 0.7),   # semi-transparent grey box
+    label.size    = 0.2,                    # border thickness around box
+    label.padding = unit(0.1, "lines"),     # padding inside box
+    check_overlap = TRUE
+  ) +
+  scale_fill_viridis_c(
+    option    = "D",
+    name      = "Vulnerability",
+    direction = 1,
+    limits    = shared_limits   # add this
+  ) +
+  xlim(-80, -46) + ylim(40, 70) +
+  theme_bw() +
+  theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
+  labs(title = "a) High emissions (SSP5-8.5)", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
+print(VMAP) 
+
+VMAP2 <- ggplot() +
+  geom_raster(data = raster_df2, aes(x = longitude, y = latitude, fill = `Vulnerability`)) +
+  #geom_sf(data = All_region_df, fill = NA) ++
+  geom_sf(data = NAFO2, color = "darkgrey", size = 0.6, fill = NA) +
+  geom_sf(data = land, fill = "cornsilk") +
+  geom_sf(data = EEZ, color = "lightblue", linetype = "dashed", size = 1) +
+  geom_sf(data = Hague, color = "red", size = 0.8)+
+  geom_sf_label(
+    data          = NAFO2,
+    aes(label     = ZONE),
+    size          = 2.5,
+    colour        = "black",
+    fontface      = "bold",
+    fill          = alpha("grey90", 0.7),   # semi-transparent grey box
+    label.size    = 0.2,                    # border thickness around box
+    label.padding = unit(0.1, "lines"),     # padding inside box
+    check_overlap = TRUE
+  ) +
+  scale_fill_viridis_c(
+    option    = "D",
+    name      = "Vulnerability",
+    direction = 1,
+    limits    = shared_limits   # add this
+  ) +
+  xlim(-80, -46) + ylim(40, 70) +
+  theme_bw() +
+  theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust = 1, size = 8, family = "serif")) +
+  labs(title = "b) Low emissions (SSP1-2.6)", x = "Longitude", y = "Latitude", color = "Vulnerability SSP5-8.5")
+print(VMAP2)
+
+library(grid)
+library(gtable)
+
+# Clean versions
+VMAP_clean <- VMAP +
+  theme(
+    legend.position = "none",
+    plot.margin     = margin(0, 0, 0, 0)   # no right margin to close the gap
+  )
+
+VMAP2_clean <- VMAP2 +
+  theme(
+    legend.position  = "right",
+    axis.title.y     = element_blank(),
+    axis.text.y      = element_blank(),
+    axis.ticks.y     = element_blank(),
+    plot.margin      = margin(0, 0, 0, 2)  # small left margin adds tiny gap
+  ) +
+  guides(fill = guide_colourbar(
+    title          = "Vulnerability",
+    barwidth       = unit(0.5, "cm"),
+    barheight      = unit(6, "cm"),
+    title.position = "top",
+    title.hjust    = 0.5
+  ))
+
+g1 <- ggplotGrob(VMAP_clean)
+g2 <- ggplotGrob(VMAP2_clean)
+
+# Bind side by side
+final_grob <- cbind(g1, g2, size = "first")
+
+ggsave(
+  filename = "CRIB results/NAFO_Pollock_5Zto0A_2scenarios.png",
+  plot     = final_grob,
+  width    = 10,
+  height   = 5,
+  dpi      = 400,
+  bg       = "white"
+)
+
+# Save as RDS
+saveRDS(final_grob, "CRIB results/NAFO_Pollock_5Zto0A_2scenarios.rds")
