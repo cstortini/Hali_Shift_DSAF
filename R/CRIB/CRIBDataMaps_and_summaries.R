@@ -1,14 +1,7 @@
-#Plot 1: Map of Core areas 
-  # make colours match CAPlot
-  #re-do all folder connections
-  #add new core areas
-  #Increase box area 
-#Plot 2: A look at the distribution of RV Survey data
-  #add NF
-  #Plot presence only 
 library(sf)
 library (ggplot2)
 library(rnaturalearth)
+library(ggrepel)
 
 #Mapping shapefiles
 EEZ <- st_read(here::here("", "Data/Mapping_shapefiles/EEZ.shp"))
@@ -28,20 +21,14 @@ Hague <- st_transform (Hague, crs)
 # Clip large shapefiles shapefile to  bounding box
 sf::sf_use_s2(FALSE)   # revert to GEOS-based operations
 
-library(sf)
-library(ggrepel)
-
-# Plot CoreArea
+# Plot study area
 CAMAP<-ggplot() +
   #geom_sf(data = contours, color="lightblue") +
-  #geom_sf(data = All_region_df,  fill = NA) +
   geom_sf(data = Hague, color="navy") +
   geom_sf(data = EEZ, color="navy", linetype = "dashed", size = 1.2) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
   geom_sf(data = land, fill="cornsilk") +
-  #scale_fill_manual(values = region_colours)+
-  #scale_fill_manual(name = " ", values = c("#E41A1C","#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628","#F781BF", "#999999")) +
-  labs(title="")+
+ labs(title="")+
   xlim(-72.5, -48) + ylim(39.355, 50)+
   theme_bw()+
   theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust=1,size=8,family="serif"))
@@ -51,11 +38,10 @@ CAMAP
 require("readr")
 url <- "https://api-proxy.edh-cde.dfo-mpo.gc.ca/catalogue/records/264692e5-7b51-4ab9-bb1f-da65f6fc0875/attachments/EN_ClimateRiskIndex_Spatial-CanEEZ_145Spp.csv"
 crib.df <- read_csv(url)
-head(crib.df)
-#write.csv(crib.df, "Data/CRIB/cribspeciesdata.csv") #file too large - do not try to save
+head(crib.df) #file too large - do not try to save
 
 #################################################################################################
-################################## Pollock & Herring ############################################
+################################ Pollock & Herring Data #########################################
 #################################################################################################
 #select pollock and herring data (replace species names with whatever species you want from the list in unique(crib.df$`common name`))
 unique(crib.df$`common name`)
@@ -67,13 +53,19 @@ write.csv(polcrib, "Data/CRIB/crib_pollock.csv")
 write.csv(hercrib, "Data/CRIB/crib_herring.csv")
 
 #################################################################################################
-##################################### HALIBUT ###################################################
+################################ Cod & Lobster Data #############################################
+#################################################################################################
+#select atl. cod and am. lobster data (replace species names with whatever species you want from the list in unique(crib.df$`common name`))
+unique(crib.df$`common name`)
+codcrib <- crib.df[crib.df$`common name` == "Atlantic Cod",]
+alcrib <- crib.df[crib.df$`common name` == "American Lobster",]
+write.csv(codcrib, "Data/CRIB/crib_atlcod.csv")
+write.csv(alcrib, "Data/CRIB/crib_amlobster.csv")
+
+#################################################################################################
+##################################### MAP HALIBUTS ###############################################
 #################################################################################################
 #select only halibut data
-#halcrib <- crib.df[crib.df$`common name` == "Atlantic Halibut",]
-#head(halcrib)
-#str(halcrib)
-#write.csv(halcrib, "Data/CRIB/crib_halibut.csv")
 halcrib<-read.csv("Data/CRIB/crib_halibut.csv")
 halcrib2<-read.csv("Data/CRIB/crib_greenland_halibut.csv")
 halcrib$ToE.year<-2015+(-log(halcrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
@@ -85,10 +77,10 @@ library(terra)
 library(gstat)
 halv<-halcrib[,c("longitude","latitude","ssp","Vulnerability")]
 halv2<-halcrib2[,c("longitude","latitude","ssp","Vulnerability")]
-haltsm<-halcrib[,c("longitude","latitude","ssp","S.Thermal.safety.margin")]
-haltoe<-halcrib[,c("longitude","latitude","ssp","ToE.year")]
-halcv<-halcrib[,c("longitude","latitude","ssp","E.Climate.velocity")]
-halthv<-halcrib[,c("longitude","latitude","ssp","AC.Thermal.habitat.availability")]
+#haltsm<-halcrib[,c("longitude","latitude","ssp","S.Thermal.safety.margin")]
+#haltoe<-halcrib[,c("longitude","latitude","ssp","ToE.year")]
+#halcv<-halcrib[,c("longitude","latitude","ssp","E.Climate.velocity")]
+#halthv<-halcrib[,c("longitude","latitude","ssp","AC.Thermal.habitat.availability")]
 # Convert to a spatial object
 spatial_points1 <- vect(halv[halv$ssp=="SSP5-8.5",], geom = c("longitude", "latitude"), crs = "WGS84")
 # Create an empty raster (set resolution and extent as needed)
