@@ -67,7 +67,6 @@ write.csv(alcrib, "Data/CRIB/crib_amlobster.csv")
 #################################################################################################
 #select only halibut data
 halcrib<-read.csv("Data/CRIB/crib_halibut.csv")
-halcrib$ToE.year<-2015+(-log(halcrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
 
 # Convert dataframe to an `sf` object
 library(sf)
@@ -220,7 +219,6 @@ saveRDS(final_grob, "CRIB results/NAFO_AH_5Zto0A_2scenarios.rds")
 #################################################################################################
 #select only halibut data
 halcrib<-read.csv("Data/CRIB/crib_greenland_halibut.csv")
-halcrib$ToE.year<-2015+(-log(halcrib2$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
 
 # Convert dataframe to an `sf` object
 library(sf)
@@ -377,7 +375,6 @@ saveRDS(final_grob, "CRIB results/NAFO_GH_5Zto0A_2scenarios.rds")
 #################################################################################################
 #select only halibut data
 halcrib<-read.csv("Data/CRIB/crib_amlobster.csv")
-halcrib$ToE.year<-2015+(-log(halcrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
 
 # Convert dataframe to an `sf` object
 library(sf)
@@ -530,7 +527,6 @@ saveRDS(final_grob, "CRIB results/NAFO_AmLobster_5Zto0A_2scenarios.rds")
 #################################################################################################
 #select only halibut data
 halcrib<-read.csv("Data/CRIB/crib_atlcod.csv")
-halcrib$ToE.year<-2015+(-log(halcrib$E.Time.of.climate.emergence)/0.033) #calculate raw ToE's from standardized
 
 # Convert dataframe to an `sf` object
 library(sf)
