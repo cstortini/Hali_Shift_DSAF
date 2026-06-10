@@ -212,15 +212,17 @@ grad_vuln <- make_gradient_df(xmin = 0, xmax = 1, direction = 1)
 
 p4 <- ggplot(data_ordered,
              aes(x = Vulnerability, y = ND)) +
-  # Layer 1: continuous viridis gradient rectangles + its own scale
   gradient_rects(grad_vuln) +
   scale_fill_gradientn(
     colours = viridis(256, option = "D"),
     limits  = c(0, 1),
-    guide   = "none"    # hidden; shown by shared bottom legend
+    guide   = "none"
   ) +
-  # Open a NEW fill scale for the SSP boxplots (ggnewscale)
   new_scale_fill() +
+  # Threshold lines (after new_scale_fill but before boxplots)
+  geom_vline(xintercept = 0.2,  colour = "#BBBBBB", linewidth = 1.2, linetype = "dashed") +
+  geom_vline(xintercept = 0.5,  colour = "#777777", linewidth = 1.2, linetype = "dashed") +
+  geom_vline(xintercept = 0.75, colour = "black", linewidth = 1.2, linetype = "dashed") +
   geom_boxplot(
     aes(fill = ssp),
     colour       = "black",
@@ -234,6 +236,18 @@ p4 <- ggplot(data_ordered,
     name   = "SSP Scenario"
   ) +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  annotate("label", x = 0.10,  y = Inf, label = "Negligible",
+           vjust = 1.5, size = 4, colour = "#BBBBBB", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.35,  y = Inf, label = "Moderate",
+           vjust = 1.5, size = 4, colour = "#777777", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.625, y = Inf, label = "High",
+           vjust = 1.5, size = 4, colour = "#333333", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.875, y = Inf, label = "Critical",
+           vjust = 1.5, size = 4, colour = "black", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
   annotate("text", x = 0.99, y = 0.3, label = "d",
            hjust = 1, vjust = -0.4, size = 5, fontface = "bold") +
   labs(
@@ -243,12 +257,13 @@ p4 <- ggplot(data_ordered,
   ) +
   base_theme +
   theme(
-    legend.position      = c(0.995, 0.97),        # inside top-right of panel
+    legend.position      = c(0.995, 0.88),        # nudged up from 0.82
     legend.justification = c(1, 1),
     legend.background    = element_rect(fill = alpha("white", 0.7), colour = NA),
     legend.key.size      = unit(0.4, "cm"),
     legend.text          = element_text(size = 11),
-    legend.title         = element_text(size = 12)
+    legend.title         = element_text(size = 12),
+    clip                 = "off"
   )
 
 
@@ -310,7 +325,7 @@ final_plot <- ggdraw(plot_body) +
 
 # ── Save ──────────────────────────────────────────────────────────────────────
 ggsave(
-  filename = "CRIB results/AtlHalibut_CRIB_Full_and_3Indices_ByNAFO.png",
+  filename = "CRIB results/AtlHalibut_CRIB_Full_and_3Indices_ByNAFO2.png",
   plot     = final_plot,
   width    = 18,
   height   = 10,
@@ -321,7 +336,7 @@ ggsave(
 message("Done! Plot saved")
 
 # Save as RDS
-saveRDS(final_plot, "CRIB results/AH_CRIB_Full_and_3Indices_ByNAFO.rds")
+saveRDS(final_plot, "CRIB results/AH_CRIB_Full_and_3Indices_ByNAFO2.rds")
 
 
 
@@ -489,15 +504,17 @@ grad_vuln <- make_gradient_df(xmin = 0, xmax = 1, direction = 1)
 
 p4 <- ggplot(data_ordered,
              aes(x = Vulnerability, y = ND)) +
-  # Layer 1: continuous viridis gradient rectangles + its own scale
   gradient_rects(grad_vuln) +
   scale_fill_gradientn(
     colours = viridis(256, option = "D"),
     limits  = c(0, 1),
-    guide   = "none"    # hidden; shown by shared bottom legend
+    guide   = "none"
   ) +
-  # Open a NEW fill scale for the SSP boxplots (ggnewscale)
   new_scale_fill() +
+  # Threshold lines (after new_scale_fill but before boxplots)
+  geom_vline(xintercept = 0.2,  colour = "#BBBBBB", linewidth = 1.2, linetype = "dashed") +
+  geom_vline(xintercept = 0.5,  colour = "#777777", linewidth = 1.2, linetype = "dashed") +
+  geom_vline(xintercept = 0.75, colour = "black", linewidth = 1.2, linetype = "dashed") +
   geom_boxplot(
     aes(fill = ssp),
     colour       = "black",
@@ -511,6 +528,18 @@ p4 <- ggplot(data_ordered,
     name   = "SSP Scenario"
   ) +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  annotate("label", x = 0.10,  y = Inf, label = "Negligible",
+           vjust = 1.5, size = 4, colour = "#BBBBBB", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.35,  y = Inf, label = "Moderate",
+           vjust = 1.5, size = 4, colour = "#777777", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.625, y = Inf, label = "High",
+           vjust = 1.5, size = 4, colour = "#333333", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.875, y = Inf, label = "Critical",
+           vjust = 1.5, size = 4, colour = "black", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
   annotate("text", x = 0.99, y = 0.3, label = "d",
            hjust = 1, vjust = -0.4, size = 5, fontface = "bold") +
   labs(
@@ -520,12 +549,13 @@ p4 <- ggplot(data_ordered,
   ) +
   base_theme +
   theme(
-    legend.position      = c(0.995, 0.97),        # inside top-right of panel
+    legend.position      = c(0.995, 0.88),        # nudged up from 0.82
     legend.justification = c(1, 1),
     legend.background    = element_rect(fill = alpha("white", 0.7), colour = NA),
     legend.key.size      = unit(0.4, "cm"),
     legend.text          = element_text(size = 11),
-    legend.title         = element_text(size = 12)
+    legend.title         = element_text(size = 12),
+    clip                 = "off"
   )
 
 
@@ -586,7 +616,7 @@ final_plot <- ggdraw(plot_body) +
 
 # ── Save ──────────────────────────────────────────────────────────────────────
 ggsave(
-  filename = "CRIB results/AtlCod_CRIB_Full_and_3Indices_ByNAFO.png",
+  filename = "CRIB results/AtlCod_CRIB_Full_and_3Indices_ByNAFO2.png",
   plot     = final_plot,
   width    = 18,
   height   = 10,
@@ -597,7 +627,7 @@ ggsave(
 message("Done! Plot saved")
 
 # Save as RDS
-saveRDS(final_plot, "CRIB results/AtlCod_CRIB_Full_and_3Indices_ByNAFO.rds")
+saveRDS(final_plot, "CRIB results/AtlCod_CRIB_Full_and_3Indices_ByNAFO2.rds")
 
 
 
@@ -763,15 +793,17 @@ grad_vuln <- make_gradient_df(xmin = 0, xmax = 1, direction = 1)
 
 p4 <- ggplot(data_ordered,
              aes(x = Vulnerability, y = ND)) +
-  # Layer 1: continuous viridis gradient rectangles + its own scale
   gradient_rects(grad_vuln) +
   scale_fill_gradientn(
     colours = viridis(256, option = "D"),
     limits  = c(0, 1),
-    guide   = "none"    # hidden; shown by shared bottom legend
+    guide   = "none"
   ) +
-  # Open a NEW fill scale for the SSP boxplots (ggnewscale)
   new_scale_fill() +
+  # Threshold lines (after new_scale_fill but before boxplots)
+  geom_vline(xintercept = 0.2,  colour = "#BBBBBB", linewidth = 1.2, linetype = "dashed") +
+  geom_vline(xintercept = 0.5,  colour = "#777777", linewidth = 1.2, linetype = "dashed") +
+  geom_vline(xintercept = 0.75, colour = "black", linewidth = 1.2, linetype = "dashed") +
   geom_boxplot(
     aes(fill = ssp),
     colour       = "black",
@@ -785,6 +817,18 @@ p4 <- ggplot(data_ordered,
     name   = "SSP Scenario"
   ) +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  annotate("label", x = 0.10,  y = Inf, label = "Negligible",
+           vjust = 1.5, size = 4, colour = "#BBBBBB", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.35,  y = Inf, label = "Moderate",
+           vjust = 1.5, size = 4, colour = "#777777", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.625, y = Inf, label = "High",
+           vjust = 1.5, size = 4, colour = "#333333", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.875, y = Inf, label = "Critical",
+           vjust = 1.5, size = 4, colour = "black", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
   annotate("text", x = 0.99, y = 0.3, label = "d",
            hjust = 1, vjust = -0.4, size = 5, fontface = "bold") +
   labs(
@@ -794,12 +838,13 @@ p4 <- ggplot(data_ordered,
   ) +
   base_theme +
   theme(
-    legend.position      = c(0.995, 0.97),        # inside top-right of panel
+    legend.position      = c(0.995, 0.88),        # nudged up from 0.82
     legend.justification = c(1, 1),
     legend.background    = element_rect(fill = alpha("white", 0.7), colour = NA),
     legend.key.size      = unit(0.4, "cm"),
     legend.text          = element_text(size = 11),
-    legend.title         = element_text(size = 12)
+    legend.title         = element_text(size = 12),
+    clip                 = "off"
   )
 
 
@@ -860,7 +905,7 @@ final_plot <- ggdraw(plot_body) +
 
 # ── Save ──────────────────────────────────────────────────────────────────────
 ggsave(
-  filename = "CRIB results/AmLobster_CRIB_Full_and_3Indices_ByNAFO.png",
+  filename = "CRIB results/AmLobster_CRIB_Full_and_3Indices_ByNAFO2.png",
   plot     = final_plot,
   width    = 18,
   height   = 10,
@@ -871,7 +916,7 @@ ggsave(
 message("Done! Plot saved")
 
 # Save as RDS
-saveRDS(final_plot, "CRIB results/AmLob_CRIB_Full_and_3Indices_ByNAFO.rds")
+saveRDS(final_plot, "CRIB results/AmLob_CRIB_Full_and_3Indices_ByNAFO2.rds")
 
 
 ################################################################################
@@ -1039,15 +1084,17 @@ grad_vuln <- make_gradient_df(xmin = 0, xmax = 1, direction = 1)
 
 p4 <- ggplot(data_ordered,
              aes(x = Vulnerability, y = ND)) +
-  # Layer 1: continuous viridis gradient rectangles + its own scale
   gradient_rects(grad_vuln) +
   scale_fill_gradientn(
     colours = viridis(256, option = "D"),
     limits  = c(0, 1),
-    guide   = "none"    # hidden; shown by shared bottom legend
+    guide   = "none"
   ) +
-  # Open a NEW fill scale for the SSP boxplots (ggnewscale)
   new_scale_fill() +
+  # Threshold lines (after new_scale_fill but before boxplots)
+  geom_vline(xintercept = 0.2,  colour = "#BBBBBB", linewidth = 1.2, linetype = "dashed") +
+  geom_vline(xintercept = 0.5,  colour = "#777777", linewidth = 1.2, linetype = "dashed") +
+  geom_vline(xintercept = 0.75, colour = "black", linewidth = 1.2, linetype = "dashed") +
   geom_boxplot(
     aes(fill = ssp),
     colour       = "black",
@@ -1061,6 +1108,18 @@ p4 <- ggplot(data_ordered,
     name   = "SSP Scenario"
   ) +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  annotate("label", x = 0.10,  y = Inf, label = "Negligible",
+           vjust = 1.5, size = 4, colour = "#BBBBBB", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.35,  y = Inf, label = "Moderate",
+           vjust = 1.5, size = 4, colour = "#777777", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.625, y = Inf, label = "High",
+           vjust = 1.5, size = 4, colour = "#333333", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
+  annotate("label", x = 0.875, y = Inf, label = "Critical",
+           vjust = 1.5, size = 4, colour = "black", fontface = "bold",
+           fill = "white", linewidth = 0.3, label.padding = unit(0.15, "lines"), label.r = unit(0, "lines")) +
   annotate("text", x = 0.99, y = 0.3, label = "d",
            hjust = 1, vjust = -0.4, size = 5, fontface = "bold") +
   labs(
@@ -1070,12 +1129,13 @@ p4 <- ggplot(data_ordered,
   ) +
   base_theme +
   theme(
-    legend.position      = c(0.995, 0.97),        # inside top-right of panel
+    legend.position      = c(0.995, 0.88),        # nudged up from 0.82
     legend.justification = c(1, 1),
     legend.background    = element_rect(fill = alpha("white", 0.7), colour = NA),
     legend.key.size      = unit(0.4, "cm"),
     legend.text          = element_text(size = 11),
-    legend.title         = element_text(size = 12)
+    legend.title         = element_text(size = 12),
+    clip                 = "off"
   )
 
 
@@ -1137,7 +1197,7 @@ final_plot <- ggdraw(plot_body) +
 
 # ── Save ──────────────────────────────────────────────────────────────────────
 ggsave(
-  filename = "CRIB results/GH_CRIB_Full_and_3Indices_ByNAFO.png",
+  filename = "CRIB results/GH_CRIB_Full_and_3Indices_ByNAFO2.png",
   plot     = final_plot,
   width    = 18,
   height   = 10,
@@ -1148,4 +1208,4 @@ ggsave(
 message("Done! Plot saved")
 
 # Save as RDS
-saveRDS(final_plot, "CRIB results/GH_CRIB_Full_and_3Indices_ByNAFO.rds")
+saveRDS(final_plot, "CRIB results/GH_CRIB_Full_and_3Indices_ByNAFO2.rds")
