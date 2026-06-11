@@ -211,9 +211,10 @@ ggsave(
   bg       = "white"
 )
 
-# save ggplot objects instead of gtable for interactive use in Shiny
-saveRDS(list(ssp85 = VMAP_clean, ssp26 = VMAP2_clean),
-        "CRIB results/NAFO_AH_5Zto0A_2scenarios.rds")
+# ← Save raster data before as.data.frame() to use for hoverable maps in DSAF app.
+saveRDS(list(ssp85 = terra::wrap(raster_data1), 
+             ssp26 = terra::wrap(raster_data2)),
+        "CRIB results/AH_5Zto0A_2scenarios2.rds")
 
 #################################################################################################
 ######################################## MAP GH #################################################
@@ -364,9 +365,10 @@ ggsave(
   bg       = "white"
 )
 
-# save ggplot objects instead of gtable for interactive use in Shiny
-saveRDS(list(ssp85 = VMAP_clean, ssp26 = VMAP2_clean),
-        "CRIB results/NAFO_GH_5Zto0A_2scenarios.rds")
+# ← Save raster data before as.data.frame() to use for hoverable maps in DSAF app.
+saveRDS(list(ssp85 = terra::wrap(raster_data1), 
+             ssp26 = terra::wrap(raster_data2)),
+        "CRIB results/GH_5Zto0A_2scenarios2.rds")
 
 #################################################################################################
 ##################################### MAP Lobster ###############################################
@@ -517,9 +519,10 @@ ggsave(
   bg       = "white"
 )
 
-# save ggplot objects instead of gtable for interactive use in Shiny
-saveRDS(list(ssp85 = VMAP_clean, ssp26 = VMAP2_clean),
-        "CRIB results/NAFO_AmLobster_5Zto0A_2scenarios.rds")
+# ← Save raster data before as.data.frame() to use for hoverable maps in DSAF app.
+saveRDS(list(ssp85 = terra::wrap(raster_data1), 
+             ssp26 = terra::wrap(raster_data2)),
+        "CRIB results/AmLob_5Zto0A_2scenarios2.rds")
 
 #################################################################################################
 ######################################## MAP Cod ################################################
@@ -670,6 +673,7 @@ ggsave(
   bg       = "white"
 )
 
-# save ggplot objects instead of gtable for interactive use in Shiny
-saveRDS(list(ssp85 = VMAP_clean, ssp26 = VMAP2_clean),
-        "CRIB results/NAFO_AtlCod_5Zto0A_2scenarios.rds")
+# ← Save raster data before as.data.frame() to use for hoverable maps in DSAF app.
+saveRDS(list(ssp85 = terra::wrap(raster_data1), 
+             ssp26 = terra::wrap(raster_data2)),
+        "CRIB results/AtlCod_5Zto0A_2scenarios2.rds")
