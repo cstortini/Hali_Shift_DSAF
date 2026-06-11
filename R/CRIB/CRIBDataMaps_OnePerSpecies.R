@@ -211,8 +211,9 @@ ggsave(
   bg       = "white"
 )
 
-# Save as RDS
-saveRDS(final_grob, "CRIB results/NAFO_AH_5Zto0A_2scenarios.rds")
+# save ggplot objects instead of gtable for interactive use in Shiny
+saveRDS(list(ssp85 = VMAP_clean, ssp26 = VMAP2_clean),
+        "CRIB results/NAFO_AH_5Zto0A_2scenarios.rds")
 
 #################################################################################################
 ######################################## MAP GH #################################################
@@ -351,10 +352,6 @@ VMAP2_clean <- VMAP2 +
 g1 <- ggplotGrob(VMAP_clean)
 g2 <- ggplotGrob(VMAP2_clean)
 
-# Remove the y-axis column from g2 to eliminate the gap
-# Find and zero out the axis-l (left axis) width in g2
-g2$widths[g2$widths == max(g2$widths)] <- unit(2, "cm")
-
 # Bind side by side
 final_grob <- cbind(g1, g2, size = "first")
 
@@ -367,8 +364,9 @@ ggsave(
   bg       = "white"
 )
 
-# Save as RDS
-saveRDS(final_grob, "CRIB results/NAFO_GH_5Zto0A_2scenarios.rds")
+# save ggplot objects instead of gtable for interactive use in Shiny
+saveRDS(list(ssp85 = VMAP_clean, ssp26 = VMAP2_clean),
+        "CRIB results/NAFO_GH_5Zto0A_2scenarios.rds")
 
 #################################################################################################
 ##################################### MAP Lobster ###############################################
@@ -519,8 +517,9 @@ ggsave(
   bg       = "white"
 )
 
-# Save as RDS
-saveRDS(final_grob, "CRIB results/NAFO_AmLobster_5Zto0A_2scenarios.rds")
+# save ggplot objects instead of gtable for interactive use in Shiny
+saveRDS(list(ssp85 = VMAP_clean, ssp26 = VMAP2_clean),
+        "CRIB results/NAFO_AmLobster_5Zto0A_2scenarios.rds")
 
 #################################################################################################
 ######################################## MAP Cod ################################################
@@ -671,5 +670,6 @@ ggsave(
   bg       = "white"
 )
 
-# Save as RDS
-saveRDS(final_grob, "CRIB results/NAFO_AtlCod_5Zto0A_2scenarios.rds")
+# save ggplot objects instead of gtable for interactive use in Shiny
+saveRDS(list(ssp85 = VMAP_clean, ssp26 = VMAP2_clean),
+        "CRIB results/NAFO_AtlCod_5Zto0A_2scenarios.rds")
